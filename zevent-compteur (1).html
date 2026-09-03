@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cagnotte en direct</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b14;
+    --bg2:#12142a;
+    --violet:#7c5cff;
+    --pink:#ff3d8a;
+    --cyan:#33e4ff;
+    --gold:#ffc93c;
+    --text:#f2f1f7;
+    --muted:#9a97b3;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html,body{
+    height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    overflow:hidden;
+  }
+
+  body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+
+  /* --- fond animé --- */
+  .aurora{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    overflow:hidden;
+    pointer-events:none;
+  }
+  .aurora span{
+    position:absolute;
+    width:60vmax;
+    height:60vmax;
+    border-radius:50%;
+    filter:blur(110px);
+    opacity:.35;
+    mix-blend-mode:screen;
+  }
+  .aurora span:nth-child(1){background:var(--violet);top:-20%;left:-10%;animation:drift1 22s ease-in-out infinite alternate;}
+  .aurora span:nth-child(2){background:var(--pink);bottom:-25%;right:-10%;animation:drift2 26s ease-in-out infinite alternate;}
+  .aurora span:nth-child(3){background:var(--cyan);top:30%;right:20%;animation:drift3 18s ease-in-out infinite alternate;}
+
+  @keyframes drift1{from{transform:translate(0,0)}to{transform:translate(10vw,8vh)}}
+  @keyframes drift2{from{transform:translate(0,0)}to{transform:translate(-8vw,-6vh)}}
+  @keyframes drift3{from{transform:translate(0,0)}to{transform:translate(-6vw,10vh)}}
+
+  #fx-canvas{
+    position:fixed;
+    inset:0;
+    z-index:5;
+    pointer-events:none;
+  }
+
+  #flash{
+    position:fixed;
+    inset:0;
+    z-index:4;
+    pointer-events:none;
+    opacity:0;
+    background:radial-gradient(circle at 50% 45%, var(--violet), transparent 70%);
+  }
+
+  main{
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding:2rem;
+  }
+
+  .live{
+    display:inline-flex;
+    align-items:center;
+    gap:.5rem;
+    color:var(--muted);
+    font-size:.95rem;
+    margin-bottom:1.25rem;
+  }
+  .live .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--pink);
+    box-shadow:0 0 0 0 rgba(255,61,138,.6);
+    animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(255,61,138,.55);}
+    70%{box-shadow:0 0 0 10px rgba(255,61,138,0);}
+    100%{box-shadow:0 0 0 0 rgba(255,61,138,0);}
+  }
+
+  #counter{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(2.8rem, 11vw, 7.5rem);
+    letter-spacing:-0.02em;
+    font-variant-numeric:tabular-nums;
+    line-height:1;
+    background:linear-gradient(120deg, #fff, var(--cyan) 60%, var(--violet));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    transition:transform .18s ease;
+  }
+  #counter.bump{transform:scale(1.035);}
+
+  .subtitle{
+    margin-top:1rem;
+    color:var(--muted);
+    font-size:clamp(.95rem,2vw,1.15rem);
+    max-width:32ch;
+  }
+
+  .donate-btn{
+    margin-top:2.25rem;
+    display:inline-flex;
+    align-items:center;
+    gap:.5rem;
+    padding:.9rem 2rem;
+    border-radius:999px;
+    background:linear-gradient(100deg, var(--violet), var(--pink));
+    color:#fff;
+    font-weight:600;
+    font-size:1rem;
+    text-decoration:none;
+    box-shadow:0 8px 30px -8px rgba(124,92,255,.6);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .donate-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 34px -6px rgba(255,61,138,.55);
+  }
+  .donate-btn:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--cyan);
+    outline-offset:3px;
+  }
+
+  /* --- bandeau palier --- */
+  #milestone-banner{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-40%);
+    z-index:6;
+    text-align:center;
+    pointer-events:none;
+    opacity:0;
+  }
+  #milestone-banner .value{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(2rem,7vw,4.5rem);
+    letter-spacing:-0.02em;
+  }
+  #milestone-banner .tagline{
+    margin-top:.4rem;
+    font-size:clamp(1rem,2.4vw,1.3rem);
+    color:var(--muted);
+  }
+  #milestone-banner.show{
+    animation:banner-in .45s cubic-bezier(.2,.9,.25,1) forwards, banner-out .5s ease-in 2.6s forwards;
+  }
+  @keyframes banner-in{
+    from{opacity:0;transform:translate(-50%,-30%) scale(.85);}
+    to{opacity:1;transform:translate(-50%,-45%) scale(1);}
+  }
+  @keyframes banner-out{
+    to{opacity:0;transform:translate(-50%,-55%) scale(1.03);}
+  }
+
+  .t-tier1 .value{color:var(--cyan); text-shadow:0 0 30px rgba(51,228,255,.5);}
+  .t-tier2 .value{color:var(--violet); text-shadow:0 0 40px rgba(124,92,255,.6);}
+  .t-tier3 .value{color:var(--pink); text-shadow:0 0 50px rgba(255,61,138,.65);}
+  .t-tier4 .value{color:#fff; text-shadow:0 0 60px rgba(124,92,255,.8), 0 0 100px rgba(255,61,138,.5);}
+  .t-record .value{color:var(--gold); text-shadow:0 0 60px rgba(255,201,60,.85);}
+  .t-record .tagline{color:var(--gold); font-weight:600;}
+
+  @keyframes shake{
+    0%,100%{transform:translate(0,0);}
+    20%{transform:translate(-6px,3px);}
+    40%{transform:translate(6px,-3px);}
+    60%{transform:translate(-5px,-2px);}
+    80%{transform:translate(5px,2px);}
+  }
+  body.shake{animation:shake .35s ease;}
+
+  /* --- panneau de test --- */
+  #test-toggle{
+    position:fixed;
+    bottom:1.25rem;
+    right:1.25rem;
+    z-index:10;
+    width:44px;height:44px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    font-size:1.1rem;
+    cursor:pointer;
+    backdrop-filter:blur(6px);
+  }
+
+  #test-panel{
+    position:fixed;
+    bottom:4.25rem;
+    right:1.25rem;
+    z-index:10;
+    width:300px;
+    max-height:75vh;
+    overflow-y:auto;
+    background:rgba(14,15,28,.92);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:16px;
+    padding:1.1rem;
+    backdrop-filter:blur(10px);
+    display:none;
+    font-size:.85rem;
+  }
+  #test-panel.open{display:block;}
+  #test-panel h2{font-size:.95rem;margin-bottom:.75rem;font-family:'Space Grotesk',sans-serif;}
+  #test-panel h3{font-size:.72rem;text-transform:none;color:var(--muted);margin:.9rem 0 .4rem;}
+  #test-panel .row{display:flex;gap:.4rem;margin-bottom:.4rem;}
+  #test-panel input[type=number]{
+    flex:1;min-width:0;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:8px;
+    color:var(--text);
+    padding:.45rem .55rem;
+  }
+  #test-panel button{
+    background:rgba(124,92,255,.18);
+    border:1px solid rgba(124,92,255,.4);
+    color:var(--text);
+    border-radius:8px;
+    padding:.45rem .6rem;
+    cursor:pointer;
+    font-size:.78rem;
+  }
+  #test-panel button:hover{background:rgba(124,92,255,.32);}
+  #test-panel .grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;}
+  #test-panel .status{
+    margin-top:.9rem;
+    padding:.5rem .6rem;
+    border-radius:8px;
+    background:rgba(255,255,255,.05);
+    color:var(--muted);
+    line-height:1.4;
+  }
+  #test-panel label.check{display:flex;align-items:center;gap:.4rem;margin-top:.6rem;color:var(--muted);}
+
+  @media (prefers-reduced-motion: reduce){
+    .aurora span, #counter, .donate-btn, body.shake{animation:none !important;transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="aurora"><span></span><span></span><span></span></div>
+  <canvas id="fx-canvas"></canvas>
+  <div id="flash"></div>
+
+  <main>
+    <p class="live"><span class="dot"></span> En direct</p>
+    <h1 id="counter">0€</h1>
+    <p class="subtitle">reversés à des associations caritatives grâce à votre générosité</p>
+    <a class="donate-btn" href="https://zevent.fr/don" target="_blank" rel="noopener">Faire un don</a>
+  </main>
+
+  <div id="milestone-banner">
+    <div class="value"></div>
+    <div class="tagline"></div>
+  </div>
+
+  <button id="test-toggle" title="Panneau de test">🧪</button>
+  <div id="test-panel">
+    <h2>Panneau de test</h2>
+
+    <h3>Définir une valeur</h3>
+    <div class="row">
+      <input type="number" id="manual-value" placeholder="ex: 2500000" step="1">
+      <button id="manual-set">Définir</button>
+    </div>
+
+    <h3>Aller directement à un palier</h3>
+    <div class="grid">
+      <button data-jump="300000">Tier 1 · 300k</button>
+      <button data-jump="1000000">Tier 2 · 1M</button>
+      <button data-jump="10000000">Tier 3 · 10M</button>
+      <button data-jump="20000000">Tier 4 · 20M</button>
+      <button data-jump="16179096">Record</button>
+      <button id="btn-reset">Réinitialiser</button>
+    </div>
+
+    <h3>Prévisualiser l'animation seule</h3>
+    <div class="grid">
+      <button data-preview="tier1">Tier 1</button>
+      <button data-preview="tier2">Tier 2</button>
+      <button data-preview="tier3">Tier 3</button>
+      <button data-preview="tier4">Tier 4</button>
+      <button data-preview="record" style="grid-column:1/-1;">Record 🏆</button>
+    </div>
+
+    <label class="check">
+      <input type="checkbox" id="sim-toggle">
+      Simulation automatique (incrémente seul)
+    </label>
+
+    <div class="status" id="status-box">initialisation…</div>
+  </div>
+
+<script>
+/* =========================================================
+   CONFIGURATION — à adapter à votre API
+   =========================================================
+   API_URL : l'endpoint qui renvoie le JSON de la cagnotte.
+   Laissez vide ("") pour rester en mode démo/simulation.
+   VALUE_PATH : chemin de la donnée dans le JSON, ex pour
+   { "donationAmount": { "number": 532730.49 } } -> ["donationAmount","number"]
+*/
+const CONFIG = {
+  API_URL: "https://zevent.fr/api/",
+  VALUE_PATH: ["donationAmount", "number"], // utilisé seulement si la réponse n'est pas la liste "live"
+  POLL_INTERVAL_MS: 5000,
+  RECORD_VALUE: 16179096,
+};
+
+/* =========================================================
+   Paliers
+   ========================================================= */
+function buildMilestones(){
+  const arr = [];
+  for(let v=100000; v<=900000; v+=100000) arr.push({value:v, tier:"tier1"});
+  [1000000,1500000,2000000,2500000].forEach(v=>arr.push({value:v, tier:"tier2"}));
+  for(let v=3000000; v<=9000000; v+=1000000) arr.push({value:v, tier:"tier2"});
+  for(let v=10000000; v<=19000000; v+=1000000) arr.push({value:v, tier:"tier3"});
+  for(let v=20000000; v<=60000000; v+=1000000) arr.push({value:v, tier:"tier4"});
+  arr.push({value: CONFIG.RECORD_VALUE, tier:"record"});
+  arr.sort((a,b)=>a.value-b.value);
+  return arr;
+}
+const MILESTONES = buildMilestones();
+
+const TAGLINES = {
+  tier1: ["Le compteur s'envole.", "Encore un palier.", "Ça continue de grimper."],
+  tier2: ["La barre symbolique.", "Un cap franchi.", "Le stream s'embrase."],
+  tier3: ["Un chiffre qui donne le vertige.", "La générosité ne faiblit pas.", "Une marque historique."],
+  tier4: ["Au-delà de tout ce qu'on espérait.", "Un niveau jamais vu.", "La cagnotte explose les compteurs."],
+  record: ["Nouveau record battu !"],
+};
+
+/* =========================================================
+   Formatage : "XX XXX XXX€"
+   ========================================================= */
+function formatEuro(n){
+  n = Math.floor(n);
+  const neg = n < 0;
+  let s = Math.abs(n).toString();
+  const groups = [];
+  while(s.length > 3){
+    groups.unshift(s.slice(-3));
+    s = s.slice(0, -3);
+  }
+  groups.unshift(s);
+  return (neg ? "-" : "") + groups.join(" ") + "€";
+}
+
+/* =========================================================
+   État persistant (localStorage)
+   ========================================================= */
+const STORE_KEY = "zevent-counter-state-v1";
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { lastValue: null, played: [] };
+}
+function saveState(){
+  localStorage.setItem(STORE_KEY, JSON.stringify({
+    lastValue: state.lastValue,
+    played: Array.from(state.played),
+  }));
+}
+const state = loadState();
+state.played = new Set(state.played || []);
+
+/* =========================================================
+   Animation du compteur (comptage progressif)
+   ========================================================= */
+const counterEl = document.getElementById("counter");
+let displayedValue = state.lastValue || 0;
+counterEl.textContent = formatEuro(displayedValue);
+
+function animateCounterTo(target, duration=1200){
+  const start = displayedValue;
+  const delta = target - start;
+  if(delta === 0) return;
+  const startTime = performance.now();
+  counterEl.classList.add("bump");
+  function frame(now){
+    const p = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+    displayedValue = start + delta * eased;
+    counterEl.textContent = formatEuro(displayedValue);
+    if(p < 1){
+      requestAnimationFrame(frame);
+    } else {
+      displayedValue = target;
+      counterEl.textContent = formatEuro(target);
+      counterEl.classList.remove("bump");
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* =========================================================
+   Système de particules (canvas)
+   ========================================================= */
+const canvas = document.getElementById("fx-canvas");
+const ctx = canvas.getContext("2d");
+function resizeCanvas(){
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+let particles = [];
+function spawnBurst({x, y, count, colors, speed, gravity, life, size}){
+  for(let i=0;i<count;i++){
+    const angle = Math.random()*Math.PI*2;
+    const v = speed * (0.4 + Math.random()*0.6);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle)*v,
+      vy: Math.sin(angle)*v - v*0.3,
+      gravity,
+      life, age:0,
+      size: size*(0.6+Math.random()*0.8),
+      color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*Math.PI*2,
+      vrot: (Math.random()-0.5)*0.3,
+    });
+  }
+}
+
+let particleLoopRunning = false;
+function particleLoop(){
+  ctx.clearRect(0,0,window.innerWidth, window.innerHeight);
+  particles.forEach(p=>{
+    p.age++;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += p.gravity;
+    p.rot += p.vrot;
+    const lifeRatio = p.age / p.life;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - lifeRatio);
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+    ctx.restore();
+  });
+  particles = particles.filter(p => p.age < p.life);
+  if(particles.length > 0 || particleLoopRunning){
+    requestAnimationFrame(particleLoop);
+  } else {
+    particleLoopRunning = false;
+  }
+}
+function ensureLoop(){
+  if(!particleLoopRunning){
+    particleLoopRunning = true;
+    requestAnimationFrame(particleLoop);
+  }
+}
+
+function confetti(intensity=1){
+  const w = window.innerWidth;
+  for(let i=0;i<8*intensity;i++){
+    spawnBurst({
+      x: Math.random()*w, y: -20,
+      count: 6, colors:["#7c5cff","#ff3d8a","#33e4ff","#ffffff"],
+      speed: 3, gravity: 0.12, life: 140, size: 8,
+    });
+  }
+  ensureLoop();
+}
+
+function fireworks(count=3, colors=["#7c5cff","#ff3d8a","#33e4ff"]){
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      const x = window.innerWidth * (0.2 + Math.random()*0.6);
+      const y = window.innerHeight * (0.2 + Math.random()*0.4);
+      spawnBurst({x,y, count:60, colors, speed:5, gravity:0.05, life:90, size:5});
+      ensureLoop();
+    }, i*260);
+  }
+}
+
+function flashScreen(color, duration=600){
+  const flash = document.getElementById("flash");
+  flash.style.background = `radial-gradient(circle at 50% 45%, ${color}, transparent 70%)`;
+  flash.style.transition = "none";
+  flash.style.opacity = "0.85";
+  requestAnimationFrame(()=>{
+    flash.style.transition = `opacity ${duration}ms ease`;
+    flash.style.opacity = "0";
+  });
+}
+
+function shakeScreen(){
+  document.body.classList.remove("shake");
+  void document.body.offsetWidth; // reflow pour rejouer l'animation
+  document.body.classList.add("shake");
+}
+
+/* =========================================================
+   Bandeau de palier
+   ========================================================= */
+const banner = document.getElementById("milestone-banner");
+function showBanner(tier, value){
+  const taglines = TAGLINES[tier] || [""];
+  const tagline = taglines[Math.floor(Math.random()*taglines.length)];
+  banner.className = "t-" + tier;
+  banner.querySelector(".value").textContent =
+    tier === "record" ? "🏆 " + formatEuro(value) : formatEuro(value);
+  banner.querySelector(".tagline").textContent = tagline;
+  // relance l'animation CSS
+  banner.classList.remove("show");
+  void banner.offsetWidth;
+  banner.classList.add("show");
+}
+
+/* =========================================================
+   Déclenchement des animations par palier
+   ========================================================= */
+function playTierAnimation(tier, value){
+  showBanner(tier, value);
+  switch(tier){
+    case "tier1":
+      confetti(1);
+      break;
+    case "tier2":
+      confetti(2);
+      flashScreen("rgba(124,92,255,.5)");
+      break;
+    case "tier3":
+      fireworks(4, ["#ff3d8a","#7c5cff","#ffffff"]);
+      flashScreen("rgba(255,61,138,.5)");
+      shakeScreen();
+      break;
+    case "tier4":
+      fireworks(7, ["#7c5cff","#ff3d8a","#33e4ff","#ffffff"]);
+      flashScreen("rgba(255,255,255,.6)");
+      shakeScreen();
+      break;
+    case "record":
+      fireworks(10, ["#ffc93c","#ffffff","#ff3d8a"]);
+      confetti(3);
+      flashScreen("rgba(255,201,60,.7)", 900);
+      shakeScreen();
+      break;
+  }
+}
+
+/* =========================================================
+   Logique métier : détection des paliers franchis
+   ========================================================= */
+function handleNewValue(newValue, {silent=false} = {}){
+  const oldValue = state.lastValue == null ? newValue : state.lastValue;
+
+  if(state.lastValue == null){
+    // première visite : on marque comme "déjà vus" tous les paliers
+    // déjà atteints, sans jouer d'animation.
+    MILESTONES.forEach(m=>{
+      if(m.value <= newValue) state.played.add(m.value);
+    });
+  } else if(newValue > oldValue && !silent){
+    MILESTONES.forEach(m=>{
+      if(m.value > oldValue && m.value <= newValue && !state.played.has(m.value)){
+        state.played.add(m.value);
+        playTierAnimation(m.tier, m.value);
+      }
+    });
+  }
+
+  state.lastValue = newValue;
+  saveState();
+  animateCounterTo(newValue);
+}
+
+/* =========================================================
+   Récupération des données (API réelle ou simulation)
+   ========================================================= */
+const statusBox = document.getElementById("status-box");
+function setStatus(text){ statusBox.textContent = text; }
+
+function extractValue(json){
+  // L'API zevent.fr/api renvoie normalement { live: [...], total: { number, formatted } }
+  // (le nom exact du champ total peut varier selon les éditions du site).
+  if(json && typeof json === "object"){
+    // 1) noms de champs courants pour un total explicite déjà calculé par l'API
+    const candidates = ["donationAmount", "total", "totalAmount", "donationTotal", "cagnotte", "montant", "amount"];
+    for(const key of candidates){
+      const val = json[key];
+      if(typeof val === "number"){
+        lastValueSource = "champ racine \"" + key + "\"";
+        return val;
+      }
+      if(val && typeof val.number === "number"){
+        lastValueSource = "champ racine \"" + key + ".number\"";
+        return val.number;
+      }
+    }
+    // 2) tout autre champ racine (hors "live") qui ressemble à un total
+    for(const key of Object.keys(json)){
+      if(key === "live") continue;
+      const val = json[key];
+      if(typeof val === "number"){
+        lastValueSource = "champ racine \"" + key + "\"";
+        return val;
+      }
+      if(val && typeof val.number === "number"){
+        lastValueSource = "champ racine \"" + key + ".number\"";
+        return val.number;
+      }
+    }
+  }
+  // 3) repli : somme des dons de chaque streamer de la liste "live"
+  if(json && Array.isArray(json.live)){
+    lastValueSource = "somme calculée sur live[].donationAmount.number";
+    return json.live.reduce((sum, streamer) => {
+      const n = streamer?.donationAmount?.number;
+      return sum + (typeof n === "number" ? n : 0);
+    }, 0);
+  }
+  // 4) repli générique pour une autre forme d'API (chemin fixe configuré)
+  let v = json;
+  for(const key of CONFIG.VALUE_PATH) v = v?.[key];
+  lastValueSource = "CONFIG.VALUE_PATH";
+  return typeof v === "number" ? v : null;
+}
+let lastValueSource = "";
+
+let pollTimer = null;
+let simulationMode = false;
+
+async function pollOnce(){
+  if(!CONFIG.API_URL){
+    simulationMode = true;
+    setStatus("Mode démo — définissez CONFIG.API_URL dans le code pour brancher l'API réelle.");
+    return;
+  }
+  try{
+    const res = await fetch(CONFIG.API_URL);
+    const json = await res.json();
+    const value = extractValue(json);
+    if(value == null) throw new Error("Chemin JSON introuvable, vérifiez CONFIG.VALUE_PATH");
+    handleNewValue(value);
+    setStatus("API réelle (" + lastValueSource + ") — dernière valeur : " + formatEuro(value));
+  }catch(err){
+    setStatus("Erreur API (" + err.message + "). Vérifiez CORS / l'URL.");
+  }
+}
+
+function startPolling(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollOnce();
+  pollTimer = setInterval(pollOnce, CONFIG.POLL_INTERVAL_MS);
+}
+startPolling();
+
+/* si aucune API n'est configurée, on affiche une valeur de départ
+   pour que la page ne soit pas vide en mode démo */
+if(!CONFIG.API_URL && state.lastValue == null){
+  handleNewValue(50000, {silent:true});
+}
+
+/* =========================================================
+   Panneau de test
+   ========================================================= */
+const testToggle = document.getElementById("test-toggle");
+const testPanel = document.getElementById("test-panel");
+testToggle.addEventListener("click", ()=> testPanel.classList.toggle("open"));
+window.addEventListener("keydown", e=>{
+  if(e.key.toLowerCase() === "t" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
+    testPanel.classList.toggle("open");
+  }
+});
+
+document.getElementById("manual-set").addEventListener("click", ()=>{
+  const val = parseFloat(document.getElementById("manual-value").value);
+  if(!isNaN(val)) handleNewValue(val);
+});
+
+document.querySelectorAll("[data-jump]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    handleNewValue(parseInt(btn.dataset.jump, 10));
+  });
+});
+
+document.querySelectorAll("[data-preview]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const tier = btn.dataset.preview;
+    const sample = tier === "record" ? CONFIG.RECORD_VALUE
+      : {tier1:300000, tier2:1000000, tier3:10000000, tier4:20000000}[tier];
+    playTierAnimation(tier, sample);
+  });
+});
+
+document.getElementById("btn-reset").addEventListener("click", ()=>{
+  localStorage.removeItem(STORE_KEY);
+  location.reload();
+});
+
+let simTimer = null;
+document.getElementById("sim-toggle").addEventListener("change", (e)=>{
+  if(e.target.checked){
+    if(pollTimer) clearInterval(pollTimer);
+    setStatus("Simulation automatique en cours…");
+    simTimer = setInterval(()=>{
+      const next = (state.lastValue || 0) + Math.floor(2000 + Math.random()*40000);
+      handleNewValue(next);
+    }, 1800);
+  } else {
+    if(simTimer) clearInterval(simTimer);
+    startPolling();
+  }
+});
+</script>
+</body>
+</html>
