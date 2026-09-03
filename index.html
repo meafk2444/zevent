@@ -588,6 +588,25 @@ function playTierAnimation(tier, value){
 }
 
 /* =========================================================
+   File d'attente : évite que plusieurs animations déclenchées
+   en même temps (ex: en sautant plusieurs paliers d'un coup)
+   ne s'écrasent entre elles
+   ========================================================= */
+let animationQueue = [];
+let queueRunning = false;
+function queueMilestone(tier, value){
+  animationQueue.push({tier, value});
+  if(!queueRunning) processQueue();
+}
+function processQueue(){
+  if(animationQueue.length === 0){ queueRunning = false; return; }
+  queueRunning = true;
+  const next = animationQueue.shift();
+  playTierAnimation(next.tier, next.value);
+  setTimeout(processQueue, 1500);
+}
+
+/* =========================================================
    Logique métier : détection des paliers franchis
    ========================================================= */
 function handleNewValue(newValue, {silent=false} = {}){
@@ -603,7 +622,7 @@ function handleNewValue(newValue, {silent=false} = {}){
     MILESTONES.forEach(m=>{
       if(m.value > oldValue && m.value <= newValue && !state.played.has(m.value)){
         state.played.add(m.value);
-        playTierAnimation(m.tier, m.value);
+        queueMilestone(m.tier, m.value);
       }
     });
   }
