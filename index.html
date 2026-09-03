@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cagnotte en direct</title>
+<title>ZEVENT 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a0b14;
-    --bg2:#12142a;
-    --violet:#7c5cff;
-    --pink:#ff3d8a;
-    --cyan:#33e4ff;
-    --gold:#ffc93c;
-    --text:#f2f1f7;
-    --muted:#9a97b3;
+    --bg:#011f01;
+    --bg2:#106310;
+    --color1:#7c5cff;
+    --color2:#ff3d8a;
+    --color3:#33e4ff;
+    --color4:#ffc93c;
+    --text1:#f2f1f7;
+    --text2:#9a97b3;
   }
 
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -24,7 +24,7 @@
   html,body{
     height:100%;
     background:var(--bg);
-    color:var(--text);
+    color:var(--text1);
     font-family:'Inter',sans-serif;
     overflow:hidden;
   }
@@ -53,9 +53,9 @@
     opacity:.35;
     mix-blend-mode:screen;
   }
-  .aurora span:nth-child(1){background:var(--violet);top:-20%;left:-10%;animation:drift1 22s ease-in-out infinite alternate;}
-  .aurora span:nth-child(2){background:var(--pink);bottom:-25%;right:-10%;animation:drift2 26s ease-in-out infinite alternate;}
-  .aurora span:nth-child(3){background:var(--cyan);top:30%;right:20%;animation:drift3 18s ease-in-out infinite alternate;}
+  .aurora span:nth-child(1){background:var(--color1);top:-20%;left:-10%;animation:drift1 22s ease-in-out infinite alternate;}
+  .aurora span:nth-child(2){background:var(--color2);bottom:-25%;right:-10%;animation:drift2 26s ease-in-out infinite alternate;}
+  .aurora span:nth-child(3){background:var(--color3);top:30%;right:20%;animation:drift3 18s ease-in-out infinite alternate;}
 
   @keyframes drift1{from{transform:translate(0,0)}to{transform:translate(10vw,8vh)}}
   @keyframes drift2{from{transform:translate(0,0)}to{transform:translate(-8vw,-6vh)}}
@@ -74,7 +74,7 @@
     z-index:4;
     pointer-events:none;
     opacity:0;
-    background:radial-gradient(circle at 50% 45%, var(--violet), transparent 70%);
+    background:radial-gradient(circle at 50% 45%, var(--color1), transparent 70%);
   }
 
   main{
@@ -91,13 +91,13 @@
     display:inline-flex;
     align-items:center;
     gap:.5rem;
-    color:var(--muted);
+    color:var(--text2);
     font-size:.95rem;
     margin-bottom:1.25rem;
   }
   .live .dot{
     width:8px;height:8px;border-radius:50%;
-    background:var(--pink);
+    background:var(--color2);
     box-shadow:0 0 0 0 rgba(255,61,138,.6);
     animation:pulse 1.6s infinite;
   }
@@ -114,7 +114,7 @@
     letter-spacing:-0.02em;
     font-variant-numeric:tabular-nums;
     line-height:1;
-    background:linear-gradient(120deg, #fff, var(--cyan) 60%, var(--violet));
+    background:linear-gradient(120deg, #fff, var(--color3) 60%, var(--color1));
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
@@ -124,7 +124,7 @@
 
   .subtitle{
     margin-top:1rem;
-    color:var(--muted);
+    color:var(--text2);
     font-size:clamp(.95rem,2vw,1.15rem);
     max-width:32ch;
   }
@@ -136,7 +136,7 @@
     gap:.5rem;
     padding:.9rem 2rem;
     border-radius:999px;
-    background:linear-gradient(100deg, var(--violet), var(--pink));
+    background:linear-gradient(100deg, var(--color1), var(--color2));
     color:#fff;
     font-weight:600;
     font-size:1rem;
@@ -149,7 +149,7 @@
     box-shadow:0 12px 34px -6px rgba(255,61,138,.55);
   }
   .donate-btn:focus-visible, button:focus-visible, input:focus-visible{
-    outline:2px solid var(--cyan);
+    outline:2px solid var(--color3);
     outline-offset:3px;
   }
 
@@ -173,7 +173,7 @@
   #milestone-banner .tagline{
     margin-top:.4rem;
     font-size:clamp(1rem,2.4vw,1.3rem);
-    color:var(--muted);
+    color:var(--text2);
   }
   #milestone-banner.show{
     animation:banner-in .45s cubic-bezier(.2,.9,.25,1) forwards, banner-out .5s ease-in 2.6s forwards;
@@ -186,12 +186,12 @@
     to{opacity:0;transform:translate(-50%,-55%) scale(1.03);}
   }
 
-  .t-tier1 .value{color:var(--cyan); text-shadow:0 0 30px rgba(51,228,255,.5);}
-  .t-tier2 .value{color:var(--violet); text-shadow:0 0 40px rgba(124,92,255,.6);}
-  .t-tier3 .value{color:var(--pink); text-shadow:0 0 50px rgba(255,61,138,.65);}
+  .t-tier1 .value{color:var(--color3); text-shadow:0 0 30px rgba(51,228,255,.5);}
+  .t-tier2 .value{color:var(--color1); text-shadow:0 0 40px rgba(124,92,255,.6);}
+  .t-tier3 .value{color:var(--color2); text-shadow:0 0 50px rgba(255,61,138,.65);}
   .t-tier4 .value{color:#fff; text-shadow:0 0 60px rgba(124,92,255,.8), 0 0 100px rgba(255,61,138,.5);}
-  .t-record .value{color:var(--gold); text-shadow:0 0 60px rgba(255,201,60,.85);}
-  .t-record .tagline{color:var(--gold); font-weight:600;}
+  .t-record .value{color:var(--color4); text-shadow:0 0 60px rgba(255,201,60,.85);}
+  .t-record .tagline{color:var(--color4); font-weight:600;}
 
   @keyframes shake{
     0%,100%{transform:translate(0,0);}
@@ -212,7 +212,7 @@
     border-radius:50%;
     border:1px solid rgba(255,255,255,.15);
     background:rgba(255,255,255,.06);
-    color:var(--text);
+    color:var(--text1);
     font-size:1.1rem;
     cursor:pointer;
     backdrop-filter:blur(6px);
@@ -236,20 +236,20 @@
   }
   #test-panel.open{display:block;}
   #test-panel h2{font-size:.95rem;margin-bottom:.75rem;font-family:'Space Grotesk',sans-serif;}
-  #test-panel h3{font-size:.72rem;text-transform:none;color:var(--muted);margin:.9rem 0 .4rem;}
+  #test-panel h3{font-size:.72rem;text-transform:none;color:var(--text2);margin:.9rem 0 .4rem;}
   #test-panel .row{display:flex;gap:.4rem;margin-bottom:.4rem;}
   #test-panel input[type=number]{
     flex:1;min-width:0;
     background:rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.15);
     border-radius:8px;
-    color:var(--text);
+    color:var(--text1);
     padding:.45rem .55rem;
   }
   #test-panel button{
     background:rgba(124,92,255,.18);
     border:1px solid rgba(124,92,255,.4);
-    color:var(--text);
+    color:var(--text1);
     border-radius:8px;
     padding:.45rem .6rem;
     cursor:pointer;
@@ -262,10 +262,10 @@
     padding:.5rem .6rem;
     border-radius:8px;
     background:rgba(255,255,255,.05);
-    color:var(--muted);
+    color:var(--text2);
     line-height:1.4;
   }
-  #test-panel label.check{display:flex;align-items:center;gap:.4rem;margin-top:.6rem;color:var(--muted);}
+  #test-panel label.check{display:flex;align-items:center;gap:.4rem;margin-top:.6rem;color:var(--text2);}
 
   @media (prefers-reduced-motion: reduce){
     .aurora span, #counter, .donate-btn, body.shake{animation:none !important;transition:none !important;}
@@ -639,10 +639,7 @@ const statusBox = document.getElementById("status-box");
 function setStatus(text){ statusBox.textContent = text; }
 
 function extractValue(json){
-  // L'API zevent.fr/api renvoie normalement { live: [...], total: { number, formatted } }
-  // (le nom exact du champ total peut varier selon les éditions du site).
   if(json && typeof json === "object"){
-    // 1) noms de champs courants pour un total explicite déjà calculé par l'API
     const candidates = ["donationAmount", "total", "totalAmount", "donationTotal", "cagnotte", "montant", "amount"];
     for(const key of candidates){
       const val = json[key];
@@ -655,7 +652,6 @@ function extractValue(json){
         return val.number;
       }
     }
-    // 2) tout autre champ racine (hors "live") qui ressemble à un total
     for(const key of Object.keys(json)){
       if(key === "live") continue;
       const val = json[key];
@@ -669,7 +665,6 @@ function extractValue(json){
       }
     }
   }
-  // 3) repli : somme des dons de chaque streamer de la liste "live"
   if(json && Array.isArray(json.live)){
     lastValueSource = "somme calculée sur live[].donationAmount.number";
     return json.live.reduce((sum, streamer) => {
@@ -677,7 +672,6 @@ function extractValue(json){
       return sum + (typeof n === "number" ? n : 0);
     }, 0);
   }
-  // 4) repli générique pour une autre forme d'API (chemin fixe configuré)
   let v = json;
   for(const key of CONFIG.VALUE_PATH) v = v?.[key];
   lastValueSource = "CONFIG.VALUE_PATH";
@@ -713,8 +707,7 @@ function startPolling(){
 }
 startPolling();
 
-/* si aucune API n'est configurée, on affiche une valeur de départ
-   pour que la page ne soit pas vide en mode démo */
+
 if(!CONFIG.API_URL && state.lastValue == null){
   handleNewValue(50000, {silent:true});
 }
