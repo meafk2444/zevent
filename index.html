@@ -31,7 +31,7 @@
     align-items:center;
     justify-content:center;
     position:relative;
-    transition: background .6s ease; /* pratique si tu changes le fond par palier */
+    transition: background .6s ease; 
   }
 
   main{
@@ -208,41 +208,13 @@
   </div>
 
 <script>
-/* =========================================================
-   CONFIGURATION DE L'API
-   =========================================================
-   1) API_URL : l'adresse qui renvoie le JSON de la cagnotte.
-      -> Mets ici l'URL réelle de l'API ZEVENT (ou ton propre
-         proxy si l'API officielle bloque le CORS depuis le
-         navigateur — c'est très souvent le cas : dans ce cas,
-         fais tourner un petit serveur relais côté back-end qui
-         récupère le JSON et le sert avec les bons headers CORS,
-         puis mets ICI l'URL de TON relais).
-
-   2) VALUE_PATH : n'est utilisé QUE si ta réponse JSON n'est ni
-      un objet avec un champ numérique évident (donationAmount,
-      total, montant, etc.) ni un tableau "live" façon API ZEVENT.
-      Exemple : si ton JSON ressemble à
-        { "data": { "cagnotte": 532730.49 } }
-      alors VALUE_PATH = ["data","cagnotte"]
-
-   3) POLL_INTERVAL_MS : fréquence d'actualisation en millisecondes.
-      5000 = toutes les 5 secondes. Ne descends pas trop bas pour
-      éviter de te faire limiter par l'API (rate limit).
-
-   4) RECORD_VALUE : le montant du record à dépasser pour
-      déclencher le palier "record".
-   ========================================================= */
 const CONFIG = {
-  API_URL: "https://zeventapi.meafk80.workers.dev/",   // <-- mets ton URL ici, ou "" pour rester en mode démo
+  API_URL: "https://zeventapi.meafk80.workers.dev/",
   VALUE_PATH: ["donationAmount", "number"],
   POLL_INTERVAL_MS: 5000,
   RECORD_VALUE: 16179096,
 };
 
-/* =========================================================
-   Paliers
-   ========================================================= */
 function buildMilestones(){
   const arr = [];
   for(let v=100000; v<=900000; v+=100000) arr.push({value:v, tier:"tier1"});
@@ -256,13 +228,11 @@ function buildMilestones(){
 }
 const MILESTONES = buildMilestones();
 
-/* =========================================================
-   Formatage : "XX XXX XXX,XX€"  (avec décimales)
-   ========================================================= */
+
 function formatEuro(n){
   const neg = n < 0;
   n = Math.abs(n);
-  const fixed = n.toFixed(2);              // "1234567.89"
+  const fixed = n.toFixed(2);              
   let [intPart, decPart] = fixed.split(".");
   const groups = [];
   while(intPart.length > 3){
@@ -273,9 +243,6 @@ function formatEuro(n){
   return (neg ? "-" : "") + groups.join(" ") + "," + decPart + "€";
 }
 
-/* =========================================================
-   État persistant (localStorage)
-   ========================================================= */
 const STORE_KEY = "zevent-counter-state-v1";
 function loadState(){
   try{
@@ -293,9 +260,7 @@ function saveState(){
 const state = loadState();
 state.played = new Set(state.played || []);
 
-/* =========================================================
-   Animation du compteur (comptage progressif)
-   ========================================================= */
+
 const counterEl = document.getElementById("counter");
 let displayedValue = state.lastValue || 0;
 counterEl.textContent = formatEuro(displayedValue);
@@ -322,30 +287,17 @@ function animateCounterTo(target, duration=1200){
   requestAnimationFrame(frame);
 }
 
-/* =========================================================
-   Application de la classe de palier sur <body>
-   =========================================================
-   À chaque fois qu'un nouveau palier est atteint, on retire
-   l'ancienne classe "tier-*" et on pose la nouvelle : tu n'as
-   plus qu'à écrire du CSS pour body.tier-tier1, .tier-tier2,
-   .tier-tier3, .tier-tier4, .tier-record dans le bloc dédié
-   plus haut dans le <style>.
-   ========================================================= */
 function applyTierClass(tier){
   document.body.classList.remove("tier-tier1","tier-tier2","tier-tier3","tier-tier4","tier-record");
   document.body.classList.add("tier-" + tier);
 }
 
-/* =========================================================
-   Logique métier : détection des paliers franchis
-   ========================================================= */
 function handleNewValue(newValue, {silent=false} = {}){
   const oldValue = state.lastValue == null ? newValue : state.lastValue;
   let lastTierReached = null;
 
   if(state.lastValue == null){
-    // première visite : on marque comme "déjà vus" tous les
-    // paliers déjà atteints, sans déclencher de style.
+
     MILESTONES.forEach(m=>{
       if(m.value <= newValue){
         state.played.add(m.value);
@@ -372,9 +324,6 @@ function handleNewValue(newValue, {silent=false} = {}){
   animateCounterTo(newValue);
 }
 
-/* =========================================================
-   Récupération des données (API réelle ou simulation)
-   ========================================================= */
 const statusBox = document.getElementById("status-box");
 function setStatus(text){ statusBox.textContent = text; }
 
