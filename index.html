@@ -76,7 +76,7 @@
     box-shadow:0 12px 34px -6px rgb(50,147,71);
     background:#021402;
   }
-  .donate-btn:focus-visible, button:focus-visible, input:focus-visible{
+  .donate-btn:focus-visible, button:focus-visible{
     outline:2px solid var(--color2);
     outline-offset:3px;
   }
@@ -109,6 +109,7 @@
     background:radial-gradient(circle at 50% 45%, transparent, transparent 70%);
   }
 
+  /* Gros chiffre : version simple et plate, pas d'effet 3D/glossy */
   #big-number{
     position:fixed;
     inset:0;
@@ -118,26 +119,21 @@
     justify-content:center;
     pointer-events:none;
     opacity:0;
-    transition:opacity .4s ease;
+    transition:opacity .35s ease;
   }
   #big-number.show{ opacity:1; }
   #big-number .circle{
-    width:min(72vw, 520px);
-    aspect-ratio:1/1;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    min-width:min(60vw, 420px);
+    padding:1.5rem 2.5rem;
+    border-radius:24px;
     text-align:center;
-    padding:1.5rem;
     font-family:'Space Grotesk',sans-serif;
     font-weight:700;
-    font-size:clamp(1.6rem, 6.5vw, 3.6rem);
+    font-size:clamp(1.6rem, 6vw, 3.2rem);
     color:#fff;
-    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.25), rgba(9,173,9,.55) 60%, rgba(1,31,1,.9));
-    box-shadow:0 0 120px rgba(9,173,9,.6);
-    transform:scale(.4);
-    transition:transform .45s cubic-bezier(.34,1.56,.64,1);
+    background:var(--color2);
+    transform:scale(.85);
+    transition:transform .3s ease;
   }
   #big-number.show .circle{ transform:scale(1); }
 
@@ -149,8 +145,8 @@
   }
   body.shake{ animation: shake .5s cubic-bezier(.36,.07,.19,.97) both; }
 
-  /* --- boutons flottants (test / mute / plein écran) --- */
-  #test-toggle, #mute-toggle, #fullscreen-toggle{
+  /* --- boutons flottants : plein écran dans le coin, mute juste à côté --- */
+  .icon-btn{
     position:fixed;
     bottom:1.25rem;
     z-index:10;
@@ -159,63 +155,15 @@
     border:1px solid rgba(255,255,255,.15);
     background:rgba(255,255,255,.06);
     color:var(--text1);
-    font-size:1.1rem;
     cursor:pointer;
     backdrop-filter:blur(6px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
-  #test-toggle{ right:1.25rem; }
+  .icon-btn svg{ width:20px; height:20px; }
+  #fullscreen-toggle{ right:1.25rem; }
   #mute-toggle{ right:5.25rem; }
-  #fullscreen-toggle{ right:9.25rem; }
-
-  #test-panel{
-    position:fixed;
-    bottom:4.25rem;
-    right:1.25rem;
-    z-index:10;
-    width:320px;
-    max-height:75vh;
-    overflow-y:auto;
-    background:rgba(14,15,28,.92);
-    border:1px solid rgba(255,255,255,.12);
-    border-radius:16px;
-    padding:1.1rem;
-    backdrop-filter:blur(10px);
-    display:none;
-    font-size:.85rem;
-    color:#eee;
-  }
-  #test-panel.open{display:block;}
-  #test-panel h2{font-size:.95rem;margin-bottom:.75rem;font-family:'Space Grotesk',sans-serif;}
-  #test-panel h3{font-size:.72rem;margin:.9rem 0 .4rem;color:#aaa;}
-  #test-panel .row{display:flex;gap:.4rem;margin-bottom:.4rem;}
-  #test-panel input[type=number]{
-    flex:1;min-width:0;
-    background:rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.15);
-    border-radius:8px;
-    color:#eee;
-    padding:.45rem .55rem;
-  }
-  #test-panel button{
-    background:rgba(124,92,255,.18);
-    border:1px solid rgba(124,92,255,.4);
-    color:#eee;
-    border-radius:8px;
-    padding:.45rem .6rem;
-    cursor:pointer;
-    font-size:.78rem;
-  }
-  #test-panel button:hover{background:rgba(124,92,255,.32);}
-  #test-panel .grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;}
-  #test-panel .status{
-    margin-top:.9rem;
-    padding:.5rem .6rem;
-    border-radius:8px;
-    background:rgba(255,255,255,.05);
-    color:#ccc;
-    line-height:1.4;
-  }
-  #test-panel label.check{display:flex;align-items:center;gap:.4rem;margin-top:.6rem;color:#ccc;}
 
   @media (prefers-reduced-motion: reduce){
     #counter, body.shake, #big-number .circle{transition:none !important; animation:none !important;}
@@ -233,45 +181,33 @@
     <a class="donate-btn" href="https://zevent.fr/don" target="_blank" rel="noopener">Faire un don</a>
   </main>
 
-  <button id="fullscreen-toggle" title="Plein écran">⛶</button>
-  <button id="mute-toggle" title="Couper le son">🔊</button>
-  <button id="test-toggle" title="Panneau de test">🧪</button>
+  <button id="fullscreen-toggle" class="icon-btn" title="Plein écran">
+    <svg id="icon-fs-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+      <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+      <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+      <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+    </svg>
+    <svg id="icon-fs-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+      <path d="M8 3v3a2 2 0 0 1-2 2H3"/>
+      <path d="M21 8h-3a2 2 0 0 1-2-2V3"/>
+      <path d="M3 16h3a2 2 0 0 1 2 2v3"/>
+      <path d="M16 21v-3a2 2 0 0 1 2-2h3"/>
+    </svg>
+  </button>
 
-  <div id="test-panel">
-    <h2>Panneau de test</h2>
-
-    <h3>Définir une valeur</h3>
-    <div class="row">
-      <input type="number" id="manual-value" placeholder="ex: 2500000.50" step="0.01">
-      <button id="manual-set">Définir</button>
-    </div>
-
-    <h3>Aller directement à un palier</h3>
-    <div class="grid">
-      <button data-jump="300000">Tier 1 · 300k</button>
-      <button data-jump="1000000">Tier 2 · 1M</button>
-      <button data-jump="10000000">Tier 3 · 10M</button>
-      <button data-jump="20000000">Tier 4 · 20M</button>
-      <button data-jump="16179096">Record</button>
-      <button id="btn-reset">Réinitialiser</button>
-    </div>
-
-    <h3>Prévisualiser l'animation seule</h3>
-    <div class="grid">
-      <button data-preview="tier1">Tier 1</button>
-      <button data-preview="tier2">Tier 2</button>
-      <button data-preview="tier3">Tier 3</button>
-      <button data-preview="tier4">Tier 4</button>
-      <button data-preview="record" style="grid-column:1/-1;">Record 🏆</button>
-    </div>
-
-    <label class="check">
-      <input type="checkbox" id="sim-toggle">
-      Simulation automatique (incrémente seul)
-    </label>
-
-    <div class="status" id="status-box">initialisation…</div>
-  </div>
+  <button id="mute-toggle" class="icon-btn" title="Couper le son">
+    <svg id="icon-unmuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+      <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+    </svg>
+    <svg id="icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <line x1="23" y1="9" x2="17" y2="15"/>
+      <line x1="17" y1="9" x2="23" y2="15"/>
+    </svg>
+  </button>
 
 <script>
 /* =========================================================
@@ -283,27 +219,25 @@ const CONFIG = {
   POLL_INTERVAL_MS: 5000,
   RECORD_VALUE: 16179096,
 
-  // Son coupé par défaut au premier chargement ? (l'utilisateur
-  // peut ensuite changer via le bouton mute, mémorisé en local)
   DEFAULT_MUTED: false,
 
   /* =======================================================
-     RÉGLAGES PAR PALIER — c'est ICI que tu personnalises tout :
-       durationMs        -> durée totale de l'effet (ms), et durée
-                             d'attente avant de jouer l'effet suivant
-                             s'il y en a plusieurs d'affilée
-       confettiBursts    -> nombre de "vagues" de confettis (0 = off)
-       fireworksBursts   -> nombre de bouquets de feu d'artifice (0 = off)
-       colors            -> couleurs utilisées par les particules
-       flashColor        -> couleur du flash plein écran (rgba)
-       flashDurationMs   -> durée du fondu du flash
-       shake             -> true/false, secoue l'écran
-       bigNumber         -> true/false, affiche le gros chiffre rond
-       bigNumberDurationMs -> durée d'affichage du gros chiffre
-       sound             -> URL d'un mp3/ogg à toi (ex: "sons/tier1.mp3"),
-                             ou null pour un bip généré automatiquement
-       soundVolume       -> 0 à 1
-       beepFrequency     -> fréquence du bip auto (Hz), ignoré si "sound" est défini
+     RÉGLAGES PAR PALIER
+       durationMs          -> durée totale de l'effet (ms) et
+                               temps d'attente avant l'effet suivant
+       confettiBursts      -> nombre de vagues de confettis (0 = off)
+       fireworksBursts     -> nombre de bouquets de feu d'artifice (0 = off)
+       colors              -> couleurs des particules
+       flashColor          -> couleur du flash plein écran (rgba)
+       flashDurationMs     -> durée du fondu du flash
+       shake               -> true/false
+       bigNumber           -> true/false, affiche le montant en grand
+       bigNumberDurationMs -> durée d'affichage
+       sound               -> mets ici l'URL de TON fichier son, ex :
+                               "https://tonsite.com/sons/tier2.mp3"
+                               (laisse null pour un bip généré automatiquement)
+       soundVolume         -> 0 à 1
+       beepFrequency       -> fréquence du bip auto (Hz), ignoré si "sound" est défini
      ======================================================= */
   TIERS: {
     tier1: {
@@ -481,8 +415,6 @@ function ensureAudioCtx(){
   if(audioCtx.state === "suspended") audioCtx.resume();
   return audioCtx;
 }
-// Les navigateurs bloquent le son tant qu'il n'y a pas eu d'interaction :
-// on débloque le contexte audio dès le premier clic sur la page.
 window.addEventListener("pointerdown", () => ensureAudioCtx(), { once: true });
 
 function playBeep(freq = 440, durationMs = 350, volume = 0.5){
@@ -505,14 +437,19 @@ function playTierSound(config){
   if(config.sound){
     const audio = new Audio(config.sound);
     audio.volume = config.soundVolume ?? 0.6;
-    audio.play().catch(() => {}); // ignore si bloqué par le navigateur
+    audio.play().catch(() => {});
   } else {
     playBeep(config.beepFrequency || 440, 350, config.soundVolume ?? 0.5);
   }
 }
 
 const muteToggle = document.getElementById("mute-toggle");
-function updateMuteIcon(){ muteToggle.textContent = isMuted ? "🔇" : "🔊"; }
+const iconUnmuted = document.getElementById("icon-unmuted");
+const iconMuted = document.getElementById("icon-muted");
+function updateMuteIcon(){
+  iconUnmuted.style.display = isMuted ? "none" : "block";
+  iconMuted.style.display = isMuted ? "block" : "none";
+}
 updateMuteIcon();
 muteToggle.addEventListener("click", () => {
   isMuted = !isMuted;
@@ -524,6 +461,8 @@ muteToggle.addEventListener("click", () => {
    Plein écran
    ========================================================= */
 const fullscreenToggle = document.getElementById("fullscreen-toggle");
+const iconFsEnter = document.getElementById("icon-fs-enter");
+const iconFsExit = document.getElementById("icon-fs-exit");
 fullscreenToggle.addEventListener("click", () => {
   if(!document.fullscreenElement){
     document.documentElement.requestFullscreen().catch(() => {});
@@ -532,7 +471,9 @@ fullscreenToggle.addEventListener("click", () => {
   }
 });
 document.addEventListener("fullscreenchange", () => {
-  fullscreenToggle.textContent = document.fullscreenElement ? "⤢" : "⛶";
+  const active = !!document.fullscreenElement;
+  iconFsEnter.style.display = active ? "none" : "block";
+  iconFsExit.style.display = active ? "block" : "none";
 });
 
 /* =========================================================
@@ -644,7 +585,7 @@ function shakeScreen(){
 }
 
 /* =========================================================
-   Gros chiffre rond
+   Gros chiffre (version simple, sans effet 3D)
    ========================================================= */
 const bigNumberEl = document.getElementById("big-number");
 let bigNumberTimer = null;
@@ -697,8 +638,6 @@ function handleNewValue(newValue, {silent=false} = {}){
   const oldValue = state.lastValue == null ? newValue : state.lastValue;
 
   if(state.lastValue == null){
-    // première visite : on marque comme "déjà vus" tous les
-    // paliers déjà atteints, sans jouer d'effet.
     let lastTier = null;
     MILESTONES.forEach(m=>{
       if(m.value <= newValue){
@@ -722,11 +661,8 @@ function handleNewValue(newValue, {silent=false} = {}){
 }
 
 /* =========================================================
-   Récupération des données (API réelle ou simulation)
+   Récupération des données (API)
    ========================================================= */
-const statusBox = document.getElementById("status-box");
-function setStatus(text){ statusBox.textContent = text; }
-
 function extractValue(json){
   if(json && typeof json === "object"){
     const candidates = ["donationAmount","total","totalAmount","donationTotal","cagnotte","montant","amount"];
@@ -756,19 +692,14 @@ function extractValue(json){
 let pollTimer = null;
 
 async function pollOnce(){
-  if(!CONFIG.API_URL){
-    setStatus("Mode démo — définissez CONFIG.API_URL dans le code pour brancher l'API réelle.");
-    return;
-  }
+  if(!CONFIG.API_URL) return;
   try{
     const res = await fetch(CONFIG.API_URL);
     const json = await res.json();
     const value = extractValue(json);
-    if(value == null) throw new Error("Chemin JSON introuvable, vérifiez CONFIG.VALUE_PATH");
-    handleNewValue(value);
-    setStatus("Dernière valeur reçue : " + formatEuro(value));
+    if(value != null) handleNewValue(value);
   }catch(err){
-    setStatus("Erreur API (" + err.message + "). Vérifiez CORS / l'URL.");
+    console.error("Erreur API :", err);
   }
 }
 
@@ -778,62 +709,6 @@ function startPolling(){
   pollTimer = setInterval(pollOnce, CONFIG.POLL_INTERVAL_MS);
 }
 startPolling();
-
-if(!CONFIG.API_URL && state.lastValue == null){
-  handleNewValue(50000.00, {silent:true});
-}
-
-/* =========================================================
-   Panneau de test
-   ========================================================= */
-const testToggle = document.getElementById("test-toggle");
-const testPanel = document.getElementById("test-panel");
-testToggle.addEventListener("click", ()=> testPanel.classList.toggle("open"));
-window.addEventListener("keydown", e=>{
-  if(e.key.toLowerCase() === "t" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
-    testPanel.classList.toggle("open");
-  }
-});
-
-document.getElementById("manual-set").addEventListener("click", ()=>{
-  const val = parseFloat(document.getElementById("manual-value").value);
-  if(!isNaN(val)) handleNewValue(val);
-});
-
-document.querySelectorAll("[data-jump]").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    handleNewValue(parseFloat(btn.dataset.jump));
-  });
-});
-
-document.querySelectorAll("[data-preview]").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    const tier = btn.dataset.preview;
-    const sample = tier === "record" ? CONFIG.RECORD_VALUE
-      : {tier1:300000, tier2:1000000, tier3:10000000, tier4:20000000}[tier];
-    playTierAnimation(tier, sample);
-  });
-});
-
-document.getElementById("btn-reset").addEventListener("click", ()=>{
-  localStorage.removeItem(STORE_KEY);
-  location.reload();
-});
-
-let simTimer = null;
-document.getElementById("sim-toggle").addEventListener("change", (e)=>{
-  if(e.target.checked){
-    if(pollTimer) clearInterval(pollTimer);
-    setStatus("Simulation automatique en cours…");
-    simTimer = setInterval(()=>{
-      const next = (state.lastValue || 0) + (2000 + Math.random()*40000);
-      handleNewValue(next);
-    }, 1800);
-  } else {
-    if(simTimer) clearInterval(simTimer);
-    startPolling();
-  }
-});
 </script>
 </body>
 </html>
