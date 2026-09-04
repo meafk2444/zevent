@@ -109,31 +109,30 @@
     background:radial-gradient(circle at 50% 45%, transparent, transparent 70%);
   }
 
-  /* Gros chiffre : version simple et plate, pas d'effet 3D/glossy */
+  /* Gros chiffre : overlay plein écran */
   #big-number{
     position:fixed;
     inset:0;
-    z-index:7;
+    z-index:8;
     display:flex;
     align-items:center;
     justify-content:center;
     pointer-events:none;
     opacity:0;
-    transition:opacity .35s ease;
+    background:var(--color2);
+    transition:opacity .3s ease;
   }
   #big-number.show{ opacity:1; }
   #big-number .circle{
-    min-width:min(60vw, 420px);
-    padding:1.5rem 2.5rem;
-    border-radius:24px;
     text-align:center;
+    padding:0 2rem;
     font-family:'Space Grotesk',sans-serif;
     font-weight:700;
-    font-size:clamp(1.6rem, 6vw, 3.2rem);
+    font-size:clamp(3rem, 15vw, 11rem);
+    line-height:1;
     color:#fff;
-    background:var(--color2);
-    transform:scale(.85);
-    transition:transform .3s ease;
+    transform:scale(.6);
+    transition:transform .5s cubic-bezier(.34,1.56,.64,1);
   }
   #big-number.show .circle{ transform:scale(1); }
 
@@ -239,11 +238,11 @@ const CONFIG = {
        soundVolume         -> 0 à 1
        beepFrequency       -> fréquence du bip auto (Hz), ignoré si "sound" est défini
      ======================================================= */
-  TIERS: {
+    TIERS: {
     tier1: {
       durationMs: 10000,
-      confettiBursts: 10,
-      fireworksBursts: 0,
+      confettiBursts: 50,
+      fireworksBursts: 10,
       colors: ["#09ad09", "#1c8a1c", "#ffffff"],
       flashColor: "rgba(9,173,9,0.35)",
       flashDurationMs: 3000,
@@ -255,9 +254,9 @@ const CONFIG = {
       beepFrequency: 440,
     },
     tier2: {
-      durationMs: 15000,
-      confettiBursts: 20,
-      fireworksBursts: 1,
+      durationMs: 20000,
+      confettiBursts: 60,
+      fireworksBursts: 20,
       colors: ["#09ad09", "#1c8a1c", "#ffffff", "#ffe08a"],
       flashColor: "rgba(9,173,9,0.5)",
       flashDurationMs: 650,
@@ -269,9 +268,9 @@ const CONFIG = {
       beepFrequency: 523,
     },
     tier3: {
-      durationMs: 18000,
-      confettiBursts: 30,
-      fireworksBursts: 4,
+      durationMs: 30000,
+      confettiBursts: 80,
+      fireworksBursts: 35,
       colors: ["#ffffff", "#ffe08a", "#09ad09"],
       flashColor: "rgba(255,255,255,0.5)",
       flashDurationMs: 800,
@@ -283,9 +282,9 @@ const CONFIG = {
       beepFrequency: 659,
     },
     tier4: {
-      durationMs: 22200,
-      confettiBursts: 45,
-      fireworksBursts: 7,
+      durationMs: 90000,
+      confettiBursts: 90,
+      fireworksBursts: 45,
       colors: ["#ffffff", "#ffe08a", "#09ad09", "#ffd23c"],
       flashColor: "rgba(255,255,255,0.65)",
       flashDurationMs: 950,
@@ -305,7 +304,7 @@ const CONFIG = {
       flashDurationMs: 5000,
       shake: true,
       bigNumber: true,
-      bigNumberDurationMs: 10000,
+      bigNumberDurationMs: 20000,
       sound: "sounds/centmilleballes.wav",
       soundVolume: 1,
       beepFrequency: 988,
