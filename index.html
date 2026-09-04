@@ -57,6 +57,8 @@
     line-height:1;
     color: var(--text1);
     transition:transform .18s ease, color .3s ease;
+    user-select:none;
+    cursor:pointer;
   }
   #counter.bump{transform:scale(1.035);}
 
@@ -74,6 +76,7 @@
     text-decoration:none;
     box-shadow:0 8px 30px -8px rgba(23,114,17,.93);
     transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+    user-select:none;
   }
   .donate-btn:hover{
     transform:translateY(-2px);
@@ -466,6 +469,10 @@ state.played = new Set(state.played || []);
 const counterEl = document.getElementById("counter");
 let displayedValue = state.lastValue || 0;
 counterEl.textContent = formatEuro(displayedValue);
+  counterEl.addEventListener("click", () => {
+  const textToCopy = formatEuro(displayedValue);
+  navigator.clipboard?.writeText(textToCopy).catch(() => {});
+});
 
 function animateCounterTo(target, duration=1200){
   const start = displayedValue;
