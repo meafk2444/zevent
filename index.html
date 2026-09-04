@@ -102,7 +102,6 @@
     background:radial-gradient(circle at 50% 45%, transparent, transparent 70%);
   }
 
-  /* Gros chiffre : overlay plein écran, fond animé + texte qui pulse */
   #big-number{
     position:fixed;
     inset:0;
@@ -167,8 +166,6 @@
     50%{ transform:scale(1.045); text-shadow:0 0 55px rgba(255,255,255,.75); }
   }
 
-  /* Le canvas de particules passe AU-DESSUS du gros chiffre, pour que
-     confettis et feux d'artifice restent visibles pendant l'overlay */
   #fx-canvas{
     position:fixed;
     inset:0;
@@ -184,7 +181,6 @@
   }
   body.shake{ animation: shake .5s cubic-bezier(.36,.07,.19,.97) both; }
 
-  /* --- boutons flottants : plein écran dans le coin, mute juste à côté --- */
   .icon-btn{
     position:fixed;
     bottom:1.25rem;
@@ -293,7 +289,7 @@ const CONFIG = {
       flashDurationMs: 3000,
       shake: false,
       bigNumber: true,
-      bigNumberDurationMs: 4000,
+      bigNumberDurationMs: 6300,
       sound: "sounds/centmilleballes.wav",
       soundVolume: 0.5,
       beepFrequency: 440,
@@ -307,7 +303,7 @@ const CONFIG = {
       flashDurationMs: 650,
       shake: false,
       bigNumber: true,
-      bigNumberDurationMs: 5000,
+      bigNumberDurationMs: 6300,
       sound: "sounds/centmilleballes.wav",
       soundVolume: 0.6,
       beepFrequency: 523,
@@ -321,7 +317,7 @@ const CONFIG = {
       flashDurationMs: 800,
       shake: true,
       bigNumber: true,
-      bigNumberDurationMs: 6000,
+      bigNumberDurationMs: 6300,
       sound: "sounds/centmilleballes.wav",
       soundVolume: 0.7,
       beepFrequency: 659,
@@ -335,7 +331,7 @@ const CONFIG = {
       flashDurationMs: 950,
       shake: true,
       bigNumber: true,
-      bigNumberDurationMs: 6000,
+      bigNumberDurationMs: 6300,
       sound: "sounds/centmilleballes.wav",
       soundVolume: 0.8,
       beepFrequency: 784,
@@ -488,8 +484,7 @@ function playOneSound(config){
   }
 }
 
-/* Joue le son du palier "config.soundRepeat" fois (1 par défaut),
-   chaque répétition espacée de 6000ms. */
+
 function playTierSound(config){
   if(isMuted) return;
   const repeats = config.soundRepeat || 1;
@@ -597,8 +592,7 @@ function ensureLoop(){
   }
 }
 
-/* Salve unique de confettis : ne se répète plus dans le temps,
-   donc l'écran ne se charge plus en confettis en continu. */
+
 function confetti(bursts, colors){
   const w = window.innerWidth;
   for(let i=0;i<bursts;i++){
@@ -642,7 +636,7 @@ function shakeScreen(){
 }
 
 /* =========================================================
-   Gros chiffre (montant + label optionnel, ex : "RECORD BATTU!")
+   Gros chiffre 
    ========================================================= */
 const bigNumberEl = document.getElementById("big-number");
 let bigNumberTimer = null;
@@ -658,9 +652,7 @@ function showBigNumber(value, duration=1800, label=null){
     labelEl.textContent = "";
     labelEl.style.display = "none";
   }
-  // on retire puis on force un reflow avant de rajouter "show" : ça garantit
-  // que l'animation d'entrée (et le fond animé) redémarre proprement même
-  // si un palier est déclenché juste après un autre.
+
   bigNumberEl.classList.remove("show");
   void bigNumberEl.offsetWidth;
   bigNumberEl.classList.add("show");
@@ -686,11 +678,9 @@ function playTierAnimation(tier, value){
   if(config.shake) shakeScreen();
   playTierSound(config);
 
-  // Confettis : une seule salve au déclenchement (ne s'accumulent plus).
   if(config.confettiBursts) confetti(config.confettiBursts, config.colors);
 
-  // Feux d'artifice : continuent à se déclencher régulièrement pendant
-  // toute la durée de l'effet.
+
   const totalDuration = config.durationMs || 1500;
   const repeatEvery = 450;
   const startTime = performance.now();
@@ -709,8 +699,7 @@ function playTierAnimation(tier, value){
 }
 
 /* =========================================================
-   File d'attente : évite que plusieurs paliers franchis d'un
-   coup ne déclenchent leurs effets en même temps
+   File d'attente
    ========================================================= */
 let animationQueue = [];
 let queueRunning = false;
@@ -728,7 +717,7 @@ function processQueue(){
 }
 
 /* =========================================================
-   Logique métier : détection des paliers franchis
+   Logique métier
    ========================================================= */
 function handleNewValue(newValue, {silent=false} = {}){
   const oldValue = state.lastValue == null ? newValue : state.lastValue;
