@@ -31,7 +31,7 @@
     align-items:center;
     justify-content:center;
     position:relative;
-    transition: background .6s ease; 
+    transition: background .6s ease;
   }
 
   main{
@@ -82,30 +82,77 @@
   }
 
   /* ==========================================================
-     CLASSES DE PALIER
-     ==========================================================
-     Dès qu'un palier est franchi, la classe correspondante est
-     posée sur <body> (et retirée au palier suivant) :
-
-       body.tier-tier1
-       body.tier-tier2
-       body.tier-tier3
-       body.tier-tier4
-       body.tier-record
-
-     Exemple d'utilisation (à remplir toi-même) :
-  */
+     CLASSES DE PALIER (posées sur <body>, en plus des effets)
+     ========================================================== */
   body.tier-tier1  { }
   body.tier-tier2  { }
   body.tier-tier3  { }
   body.tier-tier4  { }
   body.tier-record { }
 
-  /* --- panneau de test --- */
-  #test-toggle{
+  /* ==========================================================
+     COUCHE D'EFFETS PLEIN ÉCRAN
+     ========================================================== */
+  #fx-canvas{
+    position:fixed;
+    inset:0;
+    z-index:5;
+    pointer-events:none;
+  }
+
+  #flash{
+    position:fixed;
+    inset:0;
+    z-index:4;
+    pointer-events:none;
+    opacity:0;
+    background:radial-gradient(circle at 50% 45%, transparent, transparent 70%);
+  }
+
+  #big-number{
+    position:fixed;
+    inset:0;
+    z-index:7;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .4s ease;
+  }
+  #big-number.show{ opacity:1; }
+  #big-number .circle{
+    width:min(72vw, 520px);
+    aspect-ratio:1/1;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:1.5rem;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(1.6rem, 6.5vw, 3.6rem);
+    color:#fff;
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.25), rgba(9,173,9,.55) 60%, rgba(1,31,1,.9));
+    box-shadow:0 0 120px rgba(9,173,9,.6);
+    transform:scale(.4);
+    transition:transform .45s cubic-bezier(.34,1.56,.64,1);
+  }
+  #big-number.show .circle{ transform:scale(1); }
+
+  @keyframes shake{
+    10%,90%{transform:translate3d(-2px,0,0);}
+    20%,80%{transform:translate3d(4px,0,0);}
+    30%,50%,70%{transform:translate3d(-8px,0,0);}
+    40%,60%{transform:translate3d(8px,0,0);}
+  }
+  body.shake{ animation: shake .5s cubic-bezier(.36,.07,.19,.97) both; }
+
+  /* --- boutons flottants (test / mute / plein écran) --- */
+  #test-toggle, #mute-toggle, #fullscreen-toggle{
     position:fixed;
     bottom:1.25rem;
-    right:1.25rem;
     z-index:10;
     width:44px;height:44px;
     border-radius:50%;
@@ -116,13 +163,16 @@
     cursor:pointer;
     backdrop-filter:blur(6px);
   }
+  #test-toggle{ right:1.25rem; }
+  #mute-toggle{ right:5.25rem; }
+  #fullscreen-toggle{ right:9.25rem; }
 
   #test-panel{
     position:fixed;
     bottom:4.25rem;
     right:1.25rem;
     z-index:10;
-    width:300px;
+    width:320px;
     max-height:75vh;
     overflow-y:auto;
     background:rgba(14,15,28,.92);
@@ -168,18 +218,25 @@
   #test-panel label.check{display:flex;align-items:center;gap:.4rem;margin-top:.6rem;color:#ccc;}
 
   @media (prefers-reduced-motion: reduce){
-    #counter{transition:none !important;}
+    #counter, body.shake, #big-number .circle{transition:none !important; animation:none !important;}
   }
 </style>
 </head>
 <body>
+
+  <canvas id="fx-canvas"></canvas>
+  <div id="flash"></div>
+  <div id="big-number"><div class="circle"></div></div>
 
   <main>
     <h1 id="counter">0,00€</h1>
     <a class="donate-btn" href="https://zevent.fr/don" target="_blank" rel="noopener">Faire un don</a>
   </main>
 
+  <button id="fullscreen-toggle" title="Plein écran">⛶</button>
+  <button id="mute-toggle" title="Couper le son">🔊</button>
   <button id="test-toggle" title="Panneau de test">🧪</button>
+
   <div id="test-panel">
     <h2>Panneau de test</h2>
 
@@ -199,6 +256,15 @@
       <button id="btn-reset">Réinitialiser</button>
     </div>
 
+    <h3>Prévisualiser l'animation seule</h3>
+    <div class="grid">
+      <button data-preview="tier1">Tier 1</button>
+      <button data-preview="tier2">Tier 2</button>
+      <button data-preview="tier3">Tier 3</button>
+      <button data-preview="tier4">Tier 4</button>
+      <button data-preview="record" style="grid-column:1/-1;">Record 🏆</button>
+    </div>
+
     <label class="check">
       <input type="checkbox" id="sim-toggle">
       Simulation automatique (incrémente seul)
@@ -208,13 +274,114 @@
   </div>
 
 <script>
+/* =========================================================
+   CONFIGURATION
+   ========================================================= */
 const CONFIG = {
   API_URL: "https://zeventapi.meafk80.workers.dev/",
   VALUE_PATH: ["donationAmount", "number"],
   POLL_INTERVAL_MS: 5000,
   RECORD_VALUE: 16179096,
+
+  // Son coupé par défaut au premier chargement ? (l'utilisateur
+  // peut ensuite changer via le bouton mute, mémorisé en local)
+  DEFAULT_MUTED: false,
+
+  /* =======================================================
+     RÉGLAGES PAR PALIER — c'est ICI que tu personnalises tout :
+       durationMs        -> durée totale de l'effet (ms), et durée
+                             d'attente avant de jouer l'effet suivant
+                             s'il y en a plusieurs d'affilée
+       confettiBursts    -> nombre de "vagues" de confettis (0 = off)
+       fireworksBursts   -> nombre de bouquets de feu d'artifice (0 = off)
+       colors            -> couleurs utilisées par les particules
+       flashColor        -> couleur du flash plein écran (rgba)
+       flashDurationMs   -> durée du fondu du flash
+       shake             -> true/false, secoue l'écran
+       bigNumber         -> true/false, affiche le gros chiffre rond
+       bigNumberDurationMs -> durée d'affichage du gros chiffre
+       sound             -> URL d'un mp3/ogg à toi (ex: "sons/tier1.mp3"),
+                             ou null pour un bip généré automatiquement
+       soundVolume       -> 0 à 1
+       beepFrequency     -> fréquence du bip auto (Hz), ignoré si "sound" est défini
+     ======================================================= */
+  TIERS: {
+    tier1: {
+      durationMs: 1500,
+      confettiBursts: 10,
+      fireworksBursts: 0,
+      colors: ["#09ad09", "#1c8a1c", "#ffffff"],
+      flashColor: "rgba(9,173,9,0.35)",
+      flashDurationMs: 500,
+      shake: false,
+      bigNumber: false,
+      bigNumberDurationMs: 1200,
+      sound: null,
+      soundVolume: 0.5,
+      beepFrequency: 440,
+    },
+    tier2: {
+      durationMs: 2000,
+      confettiBursts: 20,
+      fireworksBursts: 1,
+      colors: ["#09ad09", "#1c8a1c", "#ffffff", "#ffe08a"],
+      flashColor: "rgba(9,173,9,0.5)",
+      flashDurationMs: 650,
+      shake: false,
+      bigNumber: true,
+      bigNumberDurationMs: 1800,
+      sound: null,
+      soundVolume: 0.6,
+      beepFrequency: 523,
+    },
+    tier3: {
+      durationMs: 2800,
+      confettiBursts: 30,
+      fireworksBursts: 4,
+      colors: ["#ffffff", "#ffe08a", "#09ad09"],
+      flashColor: "rgba(255,255,255,0.5)",
+      flashDurationMs: 800,
+      shake: true,
+      bigNumber: true,
+      bigNumberDurationMs: 2200,
+      sound: null,
+      soundVolume: 0.7,
+      beepFrequency: 659,
+    },
+    tier4: {
+      durationMs: 3500,
+      confettiBursts: 45,
+      fireworksBursts: 7,
+      colors: ["#ffffff", "#ffe08a", "#09ad09", "#ffd23c"],
+      flashColor: "rgba(255,255,255,0.65)",
+      flashDurationMs: 950,
+      shake: true,
+      bigNumber: true,
+      bigNumberDurationMs: 2800,
+      sound: null,
+      soundVolume: 0.8,
+      beepFrequency: 784,
+    },
+    record: {
+      durationMs: 5000,
+      confettiBursts: 70,
+      fireworksBursts: 12,
+      colors: ["#ffd23c", "#ffffff", "#09ad09", "#ffe08a"],
+      flashColor: "rgba(255,210,60,0.75)",
+      flashDurationMs: 1200,
+      shake: true,
+      bigNumber: true,
+      bigNumberDurationMs: 4000,
+      sound: null,
+      soundVolume: 1,
+      beepFrequency: 988,
+    },
+  },
 };
 
+/* =========================================================
+   Paliers
+   ========================================================= */
 function buildMilestones(){
   const arr = [];
   for(let v=100000; v<=900000; v+=100000) arr.push({value:v, tier:"tier1"});
@@ -228,11 +395,13 @@ function buildMilestones(){
 }
 const MILESTONES = buildMilestones();
 
-
+/* =========================================================
+   Formatage : "XX XXX XXX,XX€"
+   ========================================================= */
 function formatEuro(n){
   const neg = n < 0;
   n = Math.abs(n);
-  const fixed = n.toFixed(2);              
+  const fixed = n.toFixed(2);
   let [intPart, decPart] = fixed.split(".");
   const groups = [];
   while(intPart.length > 3){
@@ -243,6 +412,9 @@ function formatEuro(n){
   return (neg ? "-" : "") + groups.join(" ") + "," + decPart + "€";
 }
 
+/* =========================================================
+   État persistant (localStorage)
+   ========================================================= */
 const STORE_KEY = "zevent-counter-state-v1";
 function loadState(){
   try{
@@ -260,7 +432,9 @@ function saveState(){
 const state = loadState();
 state.played = new Set(state.played || []);
 
-
+/* =========================================================
+   Animation du compteur (comptage progressif)
+   ========================================================= */
 const counterEl = document.getElementById("counter");
 let displayedValue = state.lastValue || 0;
 counterEl.textContent = formatEuro(displayedValue);
@@ -273,7 +447,7 @@ function animateCounterTo(target, duration=1200){
   counterEl.classList.add("bump");
   function frame(now){
     const p = Math.min(1, (now - startTime) / duration);
-    const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+    const eased = 1 - Math.pow(1 - p, 3);
     displayedValue = start + delta * eased;
     counterEl.textContent = formatEuro(displayedValue);
     if(p < 1){
@@ -292,38 +466,264 @@ function applyTierClass(tier){
   document.body.classList.add("tier-" + tier);
 }
 
+/* =========================================================
+   Son : bip généré automatiquement OU fichier fourni
+   ========================================================= */
+let isMuted = localStorage.getItem("zevent-muted") !== null
+  ? localStorage.getItem("zevent-muted") === "true"
+  : CONFIG.DEFAULT_MUTED;
+
+let audioCtx = null;
+function ensureAudioCtx(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+// Les navigateurs bloquent le son tant qu'il n'y a pas eu d'interaction :
+// on débloque le contexte audio dès le premier clic sur la page.
+window.addEventListener("pointerdown", () => ensureAudioCtx(), { once: true });
+
+function playBeep(freq = 440, durationMs = 350, volume = 0.5){
+  if(isMuted) return;
+  const ctx = ensureAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  gain.gain.value = volume;
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + durationMs / 1000);
+  osc.stop(ctx.currentTime + durationMs / 1000);
+}
+
+function playTierSound(config){
+  if(isMuted) return;
+  if(config.sound){
+    const audio = new Audio(config.sound);
+    audio.volume = config.soundVolume ?? 0.6;
+    audio.play().catch(() => {}); // ignore si bloqué par le navigateur
+  } else {
+    playBeep(config.beepFrequency || 440, 350, config.soundVolume ?? 0.5);
+  }
+}
+
+const muteToggle = document.getElementById("mute-toggle");
+function updateMuteIcon(){ muteToggle.textContent = isMuted ? "🔇" : "🔊"; }
+updateMuteIcon();
+muteToggle.addEventListener("click", () => {
+  isMuted = !isMuted;
+  localStorage.setItem("zevent-muted", isMuted);
+  updateMuteIcon();
+});
+
+/* =========================================================
+   Plein écran
+   ========================================================= */
+const fullscreenToggle = document.getElementById("fullscreen-toggle");
+fullscreenToggle.addEventListener("click", () => {
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+});
+document.addEventListener("fullscreenchange", () => {
+  fullscreenToggle.textContent = document.fullscreenElement ? "⤢" : "⛶";
+});
+
+/* =========================================================
+   Système de particules plein écran (canvas)
+   ========================================================= */
+const canvas = document.getElementById("fx-canvas");
+const ctx2d = canvas.getContext("2d");
+function resizeCanvas(){
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  ctx2d.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+let particles = [];
+function spawnBurst({x, y, count, colors, speed, gravity, life, size}){
+  for(let i=0;i<count;i++){
+    const angle = Math.random()*Math.PI*2;
+    const v = speed * (0.4 + Math.random()*0.6);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle)*v,
+      vy: Math.sin(angle)*v - v*0.3,
+      gravity,
+      life, age:0,
+      size: size*(0.6+Math.random()*0.8),
+      color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*Math.PI*2,
+      vrot: (Math.random()-0.5)*0.3,
+    });
+  }
+}
+
+let particleLoopRunning = false;
+function particleLoop(){
+  ctx2d.clearRect(0,0,window.innerWidth, window.innerHeight);
+  particles.forEach(p=>{
+    p.age++;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += p.gravity;
+    p.rot += p.vrot;
+    const lifeRatio = p.age / p.life;
+    ctx2d.save();
+    ctx2d.globalAlpha = Math.max(0, 1 - lifeRatio);
+    ctx2d.translate(p.x, p.y);
+    ctx2d.rotate(p.rot);
+    ctx2d.fillStyle = p.color;
+    ctx2d.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+    ctx2d.restore();
+  });
+  particles = particles.filter(p => p.age < p.life);
+  if(particles.length > 0 || particleLoopRunning){
+    requestAnimationFrame(particleLoop);
+  } else {
+    particleLoopRunning = false;
+  }
+}
+function ensureLoop(){
+  if(!particleLoopRunning){
+    particleLoopRunning = true;
+    requestAnimationFrame(particleLoop);
+  }
+}
+
+function confetti(bursts, colors){
+  const w = window.innerWidth;
+  for(let i=0;i<bursts;i++){
+    spawnBurst({
+      x: Math.random()*w, y: -20,
+      count: 6, colors, speed: 3, gravity: 0.12, life: 140, size: 8,
+    });
+  }
+  ensureLoop();
+}
+
+function fireworks(bursts, colors){
+  for(let i=0;i<bursts;i++){
+    setTimeout(()=>{
+      const x = window.innerWidth * (0.15 + Math.random()*0.7);
+      const y = window.innerHeight * (0.15 + Math.random()*0.45);
+      spawnBurst({x,y, count:70, colors, speed:5.5, gravity:0.05, life:90, size:5});
+      ensureLoop();
+    }, i*220);
+  }
+}
+
+/* =========================================================
+   Flash de fond plein écran
+   ========================================================= */
+function flashScreen(color, duration=600){
+  const flash = document.getElementById("flash");
+  flash.style.background = `radial-gradient(circle at 50% 45%, ${color}, transparent 70%)`;
+  flash.style.transition = "none";
+  flash.style.opacity = "0.9";
+  requestAnimationFrame(()=>{
+    flash.style.transition = `opacity ${duration}ms ease`;
+    flash.style.opacity = "0";
+  });
+}
+
+function shakeScreen(){
+  document.body.classList.remove("shake");
+  void document.body.offsetWidth;
+  document.body.classList.add("shake");
+}
+
+/* =========================================================
+   Gros chiffre rond
+   ========================================================= */
+const bigNumberEl = document.getElementById("big-number");
+let bigNumberTimer = null;
+function showBigNumber(value, duration=1800){
+  bigNumberEl.querySelector(".circle").textContent = formatEuro(value);
+  bigNumberEl.classList.add("show");
+  clearTimeout(bigNumberTimer);
+  bigNumberTimer = setTimeout(()=> bigNumberEl.classList.remove("show"), duration);
+}
+
+/* =========================================================
+   Déclenchement de l'effet complet pour un palier
+   ========================================================= */
+function playTierAnimation(tier, value){
+  const config = CONFIG.TIERS[tier];
+  if(!config) return;
+
+  applyTierClass(tier);
+  if(config.bigNumber) showBigNumber(value, config.bigNumberDurationMs || config.durationMs);
+  if(config.confettiBursts) confetti(config.confettiBursts, config.colors);
+  if(config.fireworksBursts) fireworks(config.fireworksBursts, config.colors);
+  if(config.flashColor) flashScreen(config.flashColor, config.flashDurationMs || 600);
+  if(config.shake) shakeScreen();
+  playTierSound(config);
+}
+
+/* =========================================================
+   File d'attente : évite que plusieurs paliers franchis d'un
+   coup ne déclenchent leurs effets en même temps
+   ========================================================= */
+let animationQueue = [];
+let queueRunning = false;
+function queueMilestone(tier, value){
+  animationQueue.push({tier, value});
+  if(!queueRunning) processQueue();
+}
+function processQueue(){
+  if(animationQueue.length === 0){ queueRunning = false; return; }
+  queueRunning = true;
+  const next = animationQueue.shift();
+  playTierAnimation(next.tier, next.value);
+  const wait = (CONFIG.TIERS[next.tier]?.durationMs) || 1500;
+  setTimeout(processQueue, wait);
+}
+
+/* =========================================================
+   Logique métier : détection des paliers franchis
+   ========================================================= */
 function handleNewValue(newValue, {silent=false} = {}){
   const oldValue = state.lastValue == null ? newValue : state.lastValue;
-  let lastTierReached = null;
 
   if(state.lastValue == null){
-
+    // première visite : on marque comme "déjà vus" tous les
+    // paliers déjà atteints, sans jouer d'effet.
+    let lastTier = null;
     MILESTONES.forEach(m=>{
       if(m.value <= newValue){
         state.played.add(m.value);
-        lastTierReached = m.tier;
+        lastTier = m.tier;
       }
     });
-  } else if(newValue > oldValue){
+    if(lastTier) applyTierClass(lastTier);
+  } else if(newValue > oldValue && !silent){
     MILESTONES.forEach(m=>{
-      if(m.value > oldValue && m.value <= newValue){
-        if(!state.played.has(m.value) && !silent){
-          state.played.add(m.value);
-        } else {
-          state.played.add(m.value);
-        }
-        lastTierReached = m.tier;
+      if(m.value > oldValue && m.value <= newValue && !state.played.has(m.value)){
+        state.played.add(m.value);
+        queueMilestone(m.tier, m.value);
       }
     });
   }
-
-  if(lastTierReached) applyTierClass(lastTierReached);
 
   state.lastValue = newValue;
   saveState();
   animateCounterTo(newValue);
 }
 
+/* =========================================================
+   Récupération des données (API réelle ou simulation)
+   ========================================================= */
 const statusBox = document.getElementById("status-box");
 function setStatus(text){ statusBox.textContent = text; }
 
@@ -403,6 +803,15 @@ document.getElementById("manual-set").addEventListener("click", ()=>{
 document.querySelectorAll("[data-jump]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     handleNewValue(parseFloat(btn.dataset.jump));
+  });
+});
+
+document.querySelectorAll("[data-preview]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const tier = btn.dataset.preview;
+    const sample = tier === "record" ? CONFIG.RECORD_VALUE
+      : {tier1:300000, tier2:1000000, tier3:10000000, tier4:20000000}[tier];
+    playTierAnimation(tier, sample);
   });
 });
 
