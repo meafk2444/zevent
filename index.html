@@ -10,7 +10,7 @@
 <style>
   :root{
     --bg:#011f01;
-    --bg2:#106310;
+    --bg2:#083108;
     --color1:#011f01;
     --color2:#011f01;
     --color3:#106310;
@@ -101,55 +101,7 @@
     outline-offset:3px;
   }
 
-  /* --- bandeau palier --- */
-  #milestone-banner{
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-40%);
-    z-index:6;
-    text-align:center;
-    pointer-events:none;
-    opacity:0;
-  }
-  #milestone-banner .value{
-    font-family:'Space Grotesk',sans-serif;
-    font-weight:700;
-    font-size:clamp(2rem,7vw,4.5rem);
-    letter-spacing:-0.02em;
-  }
-  #milestone-banner .tagline{
-    margin-top:.4rem;
-    font-size:clamp(1rem,2.4vw,1.3rem);
-    color:var(--text2);
-  }
-  #milestone-banner.show{
-    animation:banner-in .45s cubic-bezier(.2,.9,.25,1) forwards, banner-out .5s ease-in 2.6s forwards;
-  }
-  @keyframes banner-in{
-    from{opacity:0;transform:translate(-50%,-30%) scale(.85);}
-    to{opacity:1;transform:translate(-50%,-45%) scale(1);}
-  }
-  @keyframes banner-out{
-    to{opacity:0;transform:translate(-50%,-55%) scale(1.03);}
-  }
-
-  .t-tier1 .value{color:var(--color3); text-shadow:0 0 30px rgba(51,228,255,.5);}
-  .t-tier2 .value{color:var(--color1); text-shadow:0 0 40px rgba(124,92,255,.6);}
-  .t-tier3 .value{color:var(--color2); text-shadow:0 0 50px rgba(255,61,138,.65);}
-  .t-tier4 .value{color:#fff; text-shadow:0 0 60px rgba(124,92,255,.8), 0 0 100px rgba(255,61,138,.5);}
-  .t-record .value{color:var(--color4); text-shadow:0 0 60px rgba(255,201,60,.85);}
-  .t-record .tagline{color:var(--color4); font-weight:600;}
-
-  @keyframes shake{
-    0%,100%{transform:translate(0,0);}
-    20%{transform:translate(-6px,3px);}
-    40%{transform:translate(6px,-3px);}
-    60%{transform:translate(-5px,-2px);}
-    80%{transform:translate(5px,2px);}
-  }
-  body.shake{animation:shake .35s ease;}
-
+  
   /* --- panneau de test --- */
   #test-toggle{
     position:fixed;
@@ -216,15 +168,11 @@
   #test-panel label.check{display:flex;align-items:center;gap:.4rem;margin-top:.6rem;color:var(--text2);}
 
   @media (prefers-reduced-motion: reduce){
-    .aurora span, #counter, .donate-btn, body.shake{animation:none !important;transition:none !important;}
+    #counter, .donate-btn, body.shake{animation:none !important;transition:none !important;}
   }
 </style>
 </head>
 <body>
-
-  <div class="aurora"><span></span><span></span><span></span></div>
-  <canvas id="fx-canvas"></canvas>
-  <div id="flash"></div>
 
   <main>
     <h1 id="counter">0€</h1>
