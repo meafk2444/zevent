@@ -12,9 +12,7 @@
     --bg:#011f01;
     --bg2:#083108;
     --color1:#011f01;
-    --color2:#011f01;
-    --color3:#106310;
-    --color4:#1c8a1c;
+    --color2:#106310;
     --text1:#09ad09;
   }
 
@@ -33,6 +31,7 @@
     align-items:center;
     justify-content:center;
     position:relative;
+    transition: background .6s ease; /* pratique si tu changes le fond par palier */
   }
 
   main{
@@ -45,22 +44,6 @@
     padding:2rem;
   }
 
-  #fx-canvas{
-    position:fixed;
-    inset:0;
-    z-index:5;
-    pointer-events:none;
-  }
-
-  #flash{
-    position:fixed;
-    inset:0;
-    z-index:4;
-    pointer-events:none;
-    opacity:0;
-    background:radial-gradient(circle at 50% 45%, var(--color1), transparent 70%);
-  }
-
   #counter{
     font-family:'Space Grotesk',sans-serif;
     font-weight:700;
@@ -68,11 +51,8 @@
     letter-spacing:-0.02em;
     font-variant-numeric:tabular-nums;
     line-height:1;
-    background: #09ad09;
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-    transition:transform .18s ease;
+    color: var(--text1);
+    transition:transform .18s ease, color .3s ease;
   }
   #counter.bump{transform:scale(1.035);}
 
@@ -88,20 +68,39 @@
     font-weight:600;
     font-size:1rem;
     text-decoration:none;
-    box-shadow:0 8px 30px -8px rgba(23, 114, 17, 0.93));
-    transition:transform .2s ease, box-shadow .2s ease;
+    box-shadow:0 8px 30px -8px rgba(23,114,17,.93);
+    transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
   }
   .donate-btn:hover{
     transform:translateY(-2px);
-    box-shadow:0 12px 34px -6px rgb(50, 147, 71));
-    background: #021402;
+    box-shadow:0 12px 34px -6px rgb(50,147,71);
+    background:#021402;
   }
   .donate-btn:focus-visible, button:focus-visible, input:focus-visible{
-    outline:2px solid var(--color3);
+    outline:2px solid var(--color2);
     outline-offset:3px;
   }
 
-  
+  /* ==========================================================
+     CLASSES DE PALIER
+     ==========================================================
+     Dès qu'un palier est franchi, la classe correspondante est
+     posée sur <body> (et retirée au palier suivant) :
+
+       body.tier-tier1
+       body.tier-tier2
+       body.tier-tier3
+       body.tier-tier4
+       body.tier-record
+
+     Exemple d'utilisation (à remplir toi-même) :
+  */
+  body.tier-tier1  { }
+  body.tier-tier2  { }
+  body.tier-tier3  { }
+  body.tier-tier4  { }
+  body.tier-record { }
+
   /* --- panneau de test --- */
   #test-toggle{
     position:fixed;
@@ -133,23 +132,24 @@
     backdrop-filter:blur(10px);
     display:none;
     font-size:.85rem;
+    color:#eee;
   }
   #test-panel.open{display:block;}
   #test-panel h2{font-size:.95rem;margin-bottom:.75rem;font-family:'Space Grotesk',sans-serif;}
-  #test-panel h3{font-size:.72rem;text-transform:none;color:var(--text2);margin:.9rem 0 .4rem;}
+  #test-panel h3{font-size:.72rem;margin:.9rem 0 .4rem;color:#aaa;}
   #test-panel .row{display:flex;gap:.4rem;margin-bottom:.4rem;}
   #test-panel input[type=number]{
     flex:1;min-width:0;
     background:rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.15);
     border-radius:8px;
-    color:var(--text1);
+    color:#eee;
     padding:.45rem .55rem;
   }
   #test-panel button{
     background:rgba(124,92,255,.18);
     border:1px solid rgba(124,92,255,.4);
-    color:var(--text1);
+    color:#eee;
     border-radius:8px;
     padding:.45rem .6rem;
     cursor:pointer;
@@ -162,27 +162,22 @@
     padding:.5rem .6rem;
     border-radius:8px;
     background:rgba(255,255,255,.05);
-    color:var(--text2);
+    color:#ccc;
     line-height:1.4;
   }
-  #test-panel label.check{display:flex;align-items:center;gap:.4rem;margin-top:.6rem;color:var(--text2);}
+  #test-panel label.check{display:flex;align-items:center;gap:.4rem;margin-top:.6rem;color:#ccc;}
 
   @media (prefers-reduced-motion: reduce){
-    #counter, .donate-btn, body.shake{animation:none !important;transition:none !important;}
+    #counter{transition:none !important;}
   }
 </style>
 </head>
 <body>
 
   <main>
-    <h1 id="counter">0€</h1>
+    <h1 id="counter">0,00€</h1>
     <a class="donate-btn" href="https://zevent.fr/don" target="_blank" rel="noopener">Faire un don</a>
   </main>
-
-  <div id="milestone-banner">
-    <div class="value"></div>
-    <div class="tagline"></div>
-  </div>
 
   <button id="test-toggle" title="Panneau de test">🧪</button>
   <div id="test-panel">
@@ -190,7 +185,7 @@
 
     <h3>Définir une valeur</h3>
     <div class="row">
-      <input type="number" id="manual-value" placeholder="ex: 2500000" step="1">
+      <input type="number" id="manual-value" placeholder="ex: 2500000.50" step="0.01">
       <button id="manual-set">Définir</button>
     </div>
 
@@ -204,15 +199,6 @@
       <button id="btn-reset">Réinitialiser</button>
     </div>
 
-    <h3>Prévisualiser l'animation seule</h3>
-    <div class="grid">
-      <button data-preview="tier1">Tier 1</button>
-      <button data-preview="tier2">Tier 2</button>
-      <button data-preview="tier3">Tier 3</button>
-      <button data-preview="tier4">Tier 4</button>
-      <button data-preview="record" style="grid-column:1/-1;">Record 🏆</button>
-    </div>
-
     <label class="check">
       <input type="checkbox" id="sim-toggle">
       Simulation automatique (incrémente seul)
@@ -223,16 +209,33 @@
 
 <script>
 /* =========================================================
-   CONFIGURATION — à adapter à votre API
+   CONFIGURATION DE L'API
    =========================================================
-   API_URL : l'endpoint qui renvoie le JSON de la cagnotte.
-   Laissez vide ("") pour rester en mode démo/simulation.
-   VALUE_PATH : chemin de la donnée dans le JSON, ex pour
-   { "donationAmount": { "number": 532730.49 } } -> ["donationAmount","number"]
-*/
+   1) API_URL : l'adresse qui renvoie le JSON de la cagnotte.
+      -> Mets ici l'URL réelle de l'API ZEVENT (ou ton propre
+         proxy si l'API officielle bloque le CORS depuis le
+         navigateur — c'est très souvent le cas : dans ce cas,
+         fais tourner un petit serveur relais côté back-end qui
+         récupère le JSON et le sert avec les bons headers CORS,
+         puis mets ICI l'URL de TON relais).
+
+   2) VALUE_PATH : n'est utilisé QUE si ta réponse JSON n'est ni
+      un objet avec un champ numérique évident (donationAmount,
+      total, montant, etc.) ni un tableau "live" façon API ZEVENT.
+      Exemple : si ton JSON ressemble à
+        { "data": { "cagnotte": 532730.49 } }
+      alors VALUE_PATH = ["data","cagnotte"]
+
+   3) POLL_INTERVAL_MS : fréquence d'actualisation en millisecondes.
+      5000 = toutes les 5 secondes. Ne descends pas trop bas pour
+      éviter de te faire limiter par l'API (rate limit).
+
+   4) RECORD_VALUE : le montant du record à dépasser pour
+      déclencher le palier "record".
+   ========================================================= */
 const CONFIG = {
-  API_URL: "https://zevent.fr/api/",
-  VALUE_PATH: ["donationAmount", "number"], // utilisé seulement si la réponse n'est pas la liste "live"
+  API_URL: "https://zevent.fr/api/",   // <-- mets ton URL ici, ou "" pour rester en mode démo
+  VALUE_PATH: ["donationAmount", "number"],
   POLL_INTERVAL_MS: 5000,
   RECORD_VALUE: 16179096,
 };
@@ -253,28 +256,21 @@ function buildMilestones(){
 }
 const MILESTONES = buildMilestones();
 
-const TAGLINES = {
-  tier1: ["Le compteur s'envole.", "Encore un palier.", "Ça continue de grimper."],
-  tier2: ["La barre symbolique.", "Un cap franchi.", "Le stream s'embrase."],
-  tier3: ["Un chiffre qui donne le vertige.", "La générosité ne faiblit pas.", "Une marque historique."],
-  tier4: ["Au-delà de tout ce qu'on espérait.", "Un niveau jamais vu.", "La cagnotte explose les compteurs."],
-  record: ["Nouveau record battu !"],
-};
-
 /* =========================================================
-   Formatage : "XX XXX XXX€"
+   Formatage : "XX XXX XXX,XX€"  (avec décimales)
    ========================================================= */
 function formatEuro(n){
-  n = Math.floor(n);
   const neg = n < 0;
-  let s = Math.abs(n).toString();
+  n = Math.abs(n);
+  const fixed = n.toFixed(2);              // "1234567.89"
+  let [intPart, decPart] = fixed.split(".");
   const groups = [];
-  while(s.length > 3){
-    groups.unshift(s.slice(-3));
-    s = s.slice(0, -3);
+  while(intPart.length > 3){
+    groups.unshift(intPart.slice(-3));
+    intPart = intPart.slice(0, -3);
   }
-  groups.unshift(s);
-  return (neg ? "-" : "") + groups.join(" ") + "€";
+  groups.unshift(intPart);
+  return (neg ? "-" : "") + groups.join(" ") + "," + decPart + "€";
 }
 
 /* =========================================================
@@ -327,177 +323,17 @@ function animateCounterTo(target, duration=1200){
 }
 
 /* =========================================================
-   Système de particules (canvas)
+   Application de la classe de palier sur <body>
+   =========================================================
+   À chaque fois qu'un nouveau palier est atteint, on retire
+   l'ancienne classe "tier-*" et on pose la nouvelle : tu n'as
+   plus qu'à écrire du CSS pour body.tier-tier1, .tier-tier2,
+   .tier-tier3, .tier-tier4, .tier-record dans le bloc dédié
+   plus haut dans le <style>.
    ========================================================= */
-const canvas = document.getElementById("fx-canvas");
-const ctx = canvas.getContext("2d");
-function resizeCanvas(){
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
-  canvas.style.width = window.innerWidth + "px";
-  canvas.style.height = window.innerHeight + "px";
-  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-}
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
-
-let particles = [];
-function spawnBurst({x, y, count, colors, speed, gravity, life, size}){
-  for(let i=0;i<count;i++){
-    const angle = Math.random()*Math.PI*2;
-    const v = speed * (0.4 + Math.random()*0.6);
-    particles.push({
-      x, y,
-      vx: Math.cos(angle)*v,
-      vy: Math.sin(angle)*v - v*0.3,
-      gravity,
-      life, age:0,
-      size: size*(0.6+Math.random()*0.8),
-      color: colors[Math.floor(Math.random()*colors.length)],
-      rot: Math.random()*Math.PI*2,
-      vrot: (Math.random()-0.5)*0.3,
-    });
-  }
-}
-
-let particleLoopRunning = false;
-function particleLoop(){
-  ctx.clearRect(0,0,window.innerWidth, window.innerHeight);
-  particles.forEach(p=>{
-    p.age++;
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += p.gravity;
-    p.rot += p.vrot;
-    const lifeRatio = p.age / p.life;
-    ctx.save();
-    ctx.globalAlpha = Math.max(0, 1 - lifeRatio);
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot);
-    ctx.fillStyle = p.color;
-    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-    ctx.restore();
-  });
-  particles = particles.filter(p => p.age < p.life);
-  if(particles.length > 0 || particleLoopRunning){
-    requestAnimationFrame(particleLoop);
-  } else {
-    particleLoopRunning = false;
-  }
-}
-function ensureLoop(){
-  if(!particleLoopRunning){
-    particleLoopRunning = true;
-    requestAnimationFrame(particleLoop);
-  }
-}
-
-function confetti(intensity=1){
-  const w = window.innerWidth;
-  for(let i=0;i<8*intensity;i++){
-    spawnBurst({
-      x: Math.random()*w, y: -20,
-      count: 6, colors:["#7c5cff","#ff3d8a","#33e4ff","#ffffff"],
-      speed: 3, gravity: 0.12, life: 140, size: 8,
-    });
-  }
-  ensureLoop();
-}
-
-function fireworks(count=3, colors=["#7c5cff","#ff3d8a","#33e4ff"]){
-  for(let i=0;i<count;i++){
-    setTimeout(()=>{
-      const x = window.innerWidth * (0.2 + Math.random()*0.6);
-      const y = window.innerHeight * (0.2 + Math.random()*0.4);
-      spawnBurst({x,y, count:60, colors, speed:5, gravity:0.05, life:90, size:5});
-      ensureLoop();
-    }, i*260);
-  }
-}
-
-function flashScreen(color, duration=600){
-  const flash = document.getElementById("flash");
-  flash.style.background = `radial-gradient(circle at 50% 45%, ${color}, transparent 70%)`;
-  flash.style.transition = "none";
-  flash.style.opacity = "0.85";
-  requestAnimationFrame(()=>{
-    flash.style.transition = `opacity ${duration}ms ease`;
-    flash.style.opacity = "0";
-  });
-}
-
-function shakeScreen(){
-  document.body.classList.remove("shake");
-  void document.body.offsetWidth; // reflow pour rejouer l'animation
-  document.body.classList.add("shake");
-}
-
-/* =========================================================
-   Bandeau de palier
-   ========================================================= */
-const banner = document.getElementById("milestone-banner");
-function showBanner(tier, value){
-  const taglines = TAGLINES[tier] || [""];
-  const tagline = taglines[Math.floor(Math.random()*taglines.length)];
-  banner.className = "t-" + tier;
-  banner.querySelector(".value").textContent =
-    tier === "record" ? "🏆 " + formatEuro(value) : formatEuro(value);
-  banner.querySelector(".tagline").textContent = tagline;
-  // relance l'animation CSS
-  banner.classList.remove("show");
-  void banner.offsetWidth;
-  banner.classList.add("show");
-}
-
-/* =========================================================
-   Déclenchement des animations par palier
-   ========================================================= */
-function playTierAnimation(tier, value){
-  showBanner(tier, value);
-  switch(tier){
-    case "tier1":
-      confetti(1);
-      break;
-    case "tier2":
-      confetti(2);
-      flashScreen("rgba(124,92,255,.5)");
-      break;
-    case "tier3":
-      fireworks(4, ["#ff3d8a","#7c5cff","#ffffff"]);
-      flashScreen("rgba(255,61,138,.5)");
-      shakeScreen();
-      break;
-    case "tier4":
-      fireworks(7, ["#7c5cff","#ff3d8a","#33e4ff","#ffffff"]);
-      flashScreen("rgba(255,255,255,.6)");
-      shakeScreen();
-      break;
-    case "record":
-      fireworks(10, ["#ffc93c","#ffffff","#ff3d8a"]);
-      confetti(3);
-      flashScreen("rgba(255,201,60,.7)", 900);
-      shakeScreen();
-      break;
-  }
-}
-
-/* =========================================================
-   File d'attente : évite que plusieurs animations déclenchées
-   en même temps (ex: en sautant plusieurs paliers d'un coup)
-   ne s'écrasent entre elles
-   ========================================================= */
-let animationQueue = [];
-let queueRunning = false;
-function queueMilestone(tier, value){
-  animationQueue.push({tier, value});
-  if(!queueRunning) processQueue();
-}
-function processQueue(){
-  if(animationQueue.length === 0){ queueRunning = false; return; }
-  queueRunning = true;
-  const next = animationQueue.shift();
-  playTierAnimation(next.tier, next.value);
-  setTimeout(processQueue, 1500);
+function applyTierClass(tier){
+  document.body.classList.remove("tier-tier1","tier-tier2","tier-tier3","tier-tier4","tier-record");
+  document.body.classList.add("tier-" + tier);
 }
 
 /* =========================================================
@@ -505,21 +341,31 @@ function processQueue(){
    ========================================================= */
 function handleNewValue(newValue, {silent=false} = {}){
   const oldValue = state.lastValue == null ? newValue : state.lastValue;
+  let lastTierReached = null;
 
   if(state.lastValue == null){
-    // première visite : on marque comme "déjà vus" tous les paliers
-    // déjà atteints, sans jouer d'animation.
+    // première visite : on marque comme "déjà vus" tous les
+    // paliers déjà atteints, sans déclencher de style.
     MILESTONES.forEach(m=>{
-      if(m.value <= newValue) state.played.add(m.value);
-    });
-  } else if(newValue > oldValue && !silent){
-    MILESTONES.forEach(m=>{
-      if(m.value > oldValue && m.value <= newValue && !state.played.has(m.value)){
+      if(m.value <= newValue){
         state.played.add(m.value);
-        queueMilestone(m.tier, m.value);
+        lastTierReached = m.tier;
+      }
+    });
+  } else if(newValue > oldValue){
+    MILESTONES.forEach(m=>{
+      if(m.value > oldValue && m.value <= newValue){
+        if(!state.played.has(m.value) && !silent){
+          state.played.add(m.value);
+        } else {
+          state.played.add(m.value);
+        }
+        lastTierReached = m.tier;
       }
     });
   }
+
+  if(lastTierReached) applyTierClass(lastTierReached);
 
   state.lastValue = newValue;
   saveState();
@@ -534,33 +380,20 @@ function setStatus(text){ statusBox.textContent = text; }
 
 function extractValue(json){
   if(json && typeof json === "object"){
-    const candidates = ["donationAmount", "total", "totalAmount", "donationTotal", "cagnotte", "montant", "amount"];
+    const candidates = ["donationAmount","total","totalAmount","donationTotal","cagnotte","montant","amount"];
     for(const key of candidates){
       const val = json[key];
-      if(typeof val === "number"){
-        lastValueSource = "champ racine \"" + key + "\"";
-        return val;
-      }
-      if(val && typeof val.number === "number"){
-        lastValueSource = "champ racine \"" + key + ".number\"";
-        return val.number;
-      }
+      if(typeof val === "number") return val;
+      if(val && typeof val.number === "number") return val.number;
     }
     for(const key of Object.keys(json)){
       if(key === "live") continue;
       const val = json[key];
-      if(typeof val === "number"){
-        lastValueSource = "champ racine \"" + key + "\"";
-        return val;
-      }
-      if(val && typeof val.number === "number"){
-        lastValueSource = "champ racine \"" + key + ".number\"";
-        return val.number;
-      }
+      if(typeof val === "number") return val;
+      if(val && typeof val.number === "number") return val.number;
     }
   }
   if(json && Array.isArray(json.live)){
-    lastValueSource = "somme calculée sur live[].donationAmount.number";
     return json.live.reduce((sum, streamer) => {
       const n = streamer?.donationAmount?.number;
       return sum + (typeof n === "number" ? n : 0);
@@ -568,17 +401,13 @@ function extractValue(json){
   }
   let v = json;
   for(const key of CONFIG.VALUE_PATH) v = v?.[key];
-  lastValueSource = "CONFIG.VALUE_PATH";
   return typeof v === "number" ? v : null;
 }
-let lastValueSource = "";
 
 let pollTimer = null;
-let simulationMode = false;
 
 async function pollOnce(){
   if(!CONFIG.API_URL){
-    simulationMode = true;
     setStatus("Mode démo — définissez CONFIG.API_URL dans le code pour brancher l'API réelle.");
     return;
   }
@@ -588,7 +417,7 @@ async function pollOnce(){
     const value = extractValue(json);
     if(value == null) throw new Error("Chemin JSON introuvable, vérifiez CONFIG.VALUE_PATH");
     handleNewValue(value);
-    setStatus("API réelle (" + lastValueSource + ") — dernière valeur : " + formatEuro(value));
+    setStatus("Dernière valeur reçue : " + formatEuro(value));
   }catch(err){
     setStatus("Erreur API (" + err.message + "). Vérifiez CORS / l'URL.");
   }
@@ -601,9 +430,8 @@ function startPolling(){
 }
 startPolling();
 
-
 if(!CONFIG.API_URL && state.lastValue == null){
-  handleNewValue(50000, {silent:true});
+  handleNewValue(50000.00, {silent:true});
 }
 
 /* =========================================================
@@ -625,16 +453,7 @@ document.getElementById("manual-set").addEventListener("click", ()=>{
 
 document.querySelectorAll("[data-jump]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
-    handleNewValue(parseInt(btn.dataset.jump, 10));
-  });
-});
-
-document.querySelectorAll("[data-preview]").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    const tier = btn.dataset.preview;
-    const sample = tier === "record" ? CONFIG.RECORD_VALUE
-      : {tier1:300000, tier2:1000000, tier3:10000000, tier4:20000000}[tier];
-    playTierAnimation(tier, sample);
+    handleNewValue(parseFloat(btn.dataset.jump));
   });
 });
 
@@ -649,7 +468,7 @@ document.getElementById("sim-toggle").addEventListener("change", (e)=>{
     if(pollTimer) clearInterval(pollTimer);
     setStatus("Simulation automatique en cours…");
     simTimer = setInterval(()=>{
-      const next = (state.lastValue || 0) + Math.floor(2000 + Math.random()*40000);
+      const next = (state.lastValue || 0) + (2000 + Math.random()*40000);
       handleNewValue(next);
     }, 1800);
   } else {
