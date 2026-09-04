@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<link rel="icon" type="image/png" href="favicon.png">
-<link rel="apple-touch-icon" href="favicon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZEVENT 2026</title>
+
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -58,20 +60,6 @@
   }
   #counter.bump{transform:scale(1.035);}
 
-  #zevent-logo{
-  position:fixed;
-  top:2rem;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:3;
-  height:clamp(48px, 6vw, 90px);
-  width:auto;
-  filter:drop-shadow(0 6px 22px rgba(0,0,0,.45));
-  opacity:.96;
-  pointer-events:none;
-  user-select:none;
-}
-
   .donate-btn{
     margin-top:2.25rem;
     display:inline-flex;
@@ -98,7 +86,7 @@
   }
 
   /* ==========================================================
-     CLASSES DE PALIER (posées sur <body>, en plus des effets)
+     CLASSES DE PALIER
      ========================================================== */
   body.tier-tier1  { }
   body.tier-tier2  { }
@@ -197,6 +185,45 @@
   }
   body.shake{ animation: shake .5s cubic-bezier(.36,.07,.19,.97) both; }
 
+  /* ==========================================================
+     LOGO ZEVENT 26
+     ========================================================== */
+  #zevent-logo{
+    position:fixed;
+    top:1.75rem;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:3;
+    height:clamp(48px, 6vw, 90px);
+    width:auto;
+    filter:drop-shadow(0 6px 22px rgba(0,0,0,.45));
+    opacity:.96;
+    pointer-events:none;
+    user-select:none;
+  }
+
+  /* ==========================================================
+     PLEIN ÉCRAN
+     ========================================================== */
+  body.is-fullscreen .donate-btn{
+    display:none;
+  }
+  body.is-fullscreen #counter{
+    font-size:clamp(3.4rem, 13vw, 9rem);
+  }
+
+  /* ==========================================================
+     BOUTONS FLOTTANTS
+     ========================================================== */
+  .icon-btn{
+    transition:opacity .4s ease;
+    opacity:1;
+  }
+  body.controls-hidden .icon-btn{
+    opacity:0;
+    pointer-events:none;
+  }
+
   .icon-btn{
     position:fixed;
     bottom:1.25rem;
@@ -224,7 +251,7 @@
 <body>
 
   <img id="zevent-logo" src="assets/zevent26-logo.png" alt="ZEVENT 26">
-  
+
   <canvas id="fx-canvas"></canvas>
   <div id="flash"></div>
   <div id="big-number"><div class="circle"><div class="circle-amount"></div><div class="circle-label"></div></div></div>
@@ -426,7 +453,7 @@ const state = loadState();
 state.played = new Set(state.played || []);
 
 /* =========================================================
-   Animation du compteur (comptage progressif)
+   Animation du compteur
    ========================================================= */
 const counterEl = document.getElementById("counter");
 let displayedValue = state.lastValue || 0;
@@ -542,10 +569,27 @@ document.addEventListener("fullscreenchange", () => {
   const active = !!document.fullscreenElement;
   iconFsEnter.style.display = active ? "none" : "block";
   iconFsExit.style.display = active ? "block" : "none";
+  document.body.classList.toggle("is-fullscreen", active);
 });
 
 /* =========================================================
-   Système de particules plein écran (canvas)
+   Auto-masquage des boutons flottants après 3s d'inactivité souris
+   ========================================================= */
+let hideControlsTimer = null;
+function showControls(){
+  document.body.classList.remove("controls-hidden");
+  clearTimeout(hideControlsTimer);
+  hideControlsTimer = setTimeout(() => {
+    document.body.classList.add("controls-hidden");
+  }, 3000);
+}
+window.addEventListener("mousemove", showControls);
+window.addEventListener("mousedown", showControls);
+window.addEventListener("touchstart", showControls);
+showControls();
+
+/* =========================================================
+   Système de particules plein écran
    ========================================================= */
 const canvas = document.getElementById("fx-canvas");
 const ctx2d = canvas.getContext("2d");
@@ -610,7 +654,6 @@ function ensureLoop(){
   }
 }
 
-
 function confetti(bursts, colors){
   const w = window.innerWidth;
   for(let i=0;i<bursts;i++){
@@ -654,7 +697,7 @@ function shakeScreen(){
 }
 
 /* =========================================================
-   Gros chiffre 
+   Gros chiffre
    ========================================================= */
 const bigNumberEl = document.getElementById("big-number");
 let bigNumberTimer = null;
@@ -670,7 +713,7 @@ function showBigNumber(value, duration=1800, label=null){
     labelEl.textContent = "";
     labelEl.style.display = "none";
   }
-
+  
   bigNumberEl.classList.remove("show");
   void bigNumberEl.offsetWidth;
   bigNumberEl.classList.add("show");
@@ -697,7 +740,6 @@ function playTierAnimation(tier, value){
   playTierSound(config);
 
   if(config.confettiBursts) confetti(config.confettiBursts, config.colors);
-
 
   const totalDuration = config.durationMs || 1500;
   const repeatEvery = 450;
