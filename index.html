@@ -123,13 +123,29 @@
   #big-number .circle{
     text-align:center;
     padding:0 2rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    transform:scale(.5);
+    opacity:0;
+  }
+  #big-number .circle-amount{
     font-family:'Space Grotesk',sans-serif;
     font-weight:700;
     font-size:clamp(3rem, 15vw, 11rem);
     line-height:1;
     color:#fff;
-    transform:scale(.5);
-    opacity:0;
+  }
+  #big-number .circle-label{
+    margin-top:0.6rem;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(1.5rem, 6vw, 3.5rem);
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    color:#ffd23c;
+    text-shadow:0 0 25px rgba(255,210,60,.65);
+    display:none;
   }
   #big-number.show .circle{
     animation: bigNumberIntro .55s cubic-bezier(.34,1.56,.64,1) forwards,
@@ -197,7 +213,7 @@
 
   <canvas id="fx-canvas"></canvas>
   <div id="flash"></div>
-  <div id="big-number"><div class="circle"></div></div>
+  <div id="big-number"><div class="circle"><div class="circle-amount"></div><div class="circle-label"></div></div></div>
 
   <main>
     <h1 id="counter">0,00€</h1>
@@ -248,8 +264,11 @@ const CONFIG = {
      RÉGLAGES PAR PALIER
        durationMs          -> durée totale de l'effet (ms) et
                                temps d'attente avant l'effet suivant
-       confettiBursts      -> nombre de vagues de confettis (0 = off)
-       fireworksBursts     -> nombre de bouquets de feu d'artifice (0 = off)
+       confettiBursts      -> nombre de particules de la salve unique de confettis
+                               (0 = off). Les confettis ne se répètent plus :
+                               une seule salve est jouée par déclenchement.
+       fireworksBursts     -> nombre de bouquets de feu d'artifice (0 = off),
+                               répétés régulièrement pendant toute la durée
        colors              -> couleurs des particules
        flashColor          -> couleur du flash plein écran (rgba)
        flashDurationMs     -> durée du fondu du flash
@@ -260,11 +279,13 @@ const CONFIG = {
                                "https://tonsite.com/sons/tier2.mp3"
                                (laisse null pour un bip généré automatiquement)
        soundVolume         -> 0 à 1
+       soundRepeat         -> nombre de fois où le son est joué, espacé de
+                               6000ms (par défaut 1 si absent)
        beepFrequency       -> fréquence du bip auto (Hz), ignoré si "sound" est défini
      ======================================================= */
   TIERS: {
     tier1: {
-      durationMs: 10000,
+      durationMs: 6000,
       confettiBursts: 50,
       fireworksBursts: 10,
       colors: ["#09ad09", "#1c8a1c", "#ffffff"],
@@ -278,7 +299,7 @@ const CONFIG = {
       beepFrequency: 440,
     },
     tier2: {
-      durationMs: 20000,
+      durationMs: 6000,
       confettiBursts: 60,
       fireworksBursts: 20,
       colors: ["#09ad09", "#1c8a1c", "#ffffff", "#ffe08a"],
@@ -292,7 +313,7 @@ const CONFIG = {
       beepFrequency: 523,
     },
     tier3: {
-      durationMs: 30000,
+      durationMs: 6000,
       confettiBursts: 80,
       fireworksBursts: 35,
       colors: ["#ffffff", "#ffe08a", "#09ad09"],
@@ -300,13 +321,13 @@ const CONFIG = {
       flashDurationMs: 800,
       shake: true,
       bigNumber: true,
-      bigNumberDurationMs: 10000,
+      bigNumberDurationMs: 6000,
       sound: "sounds/centmilleballes.wav",
       soundVolume: 0.7,
       beepFrequency: 659,
     },
     tier4: {
-      durationMs: 90000,
+      durationMs: 6000,
       confettiBursts: 90,
       fireworksBursts: 45,
       colors: ["#ffffff", "#ffe08a", "#09ad09", "#ffd23c"],
@@ -314,13 +335,13 @@ const CONFIG = {
       flashDurationMs: 950,
       shake: true,
       bigNumber: true,
-      bigNumberDurationMs: 15000,
+      bigNumberDurationMs: 6000,
       sound: "sounds/centmilleballes.wav",
       soundVolume: 0.8,
       beepFrequency: 784,
     },
     record: {
-      durationMs: 100000,
+      durationMs: 12000,
       confettiBursts: 100,
       fireworksBursts: 50,
       colors: ["#ffd23c", "#ffffff", "#09ad09", "#ffe08a"],
@@ -328,9 +349,10 @@ const CONFIG = {
       flashDurationMs: 5000,
       shake: true,
       bigNumber: true,
-      bigNumberDurationMs: 15000,
+      bigNumberDurationMs: 12000,
       sound: "sounds/centmilleballes.wav",
       soundVolume: 1,
+      soundRepeat: 2,
       beepFrequency: 988,
     },
   },
@@ -455,7 +477,7 @@ function playBeep(freq = 440, durationMs = 350, volume = 0.5){
   osc.stop(ctx.currentTime + durationMs / 1000);
 }
 
-function playTierSound(config){
+function playOneSound(config){
   if(isMuted) return;
   if(config.sound){
     const audio = new Audio(config.sound);
@@ -463,6 +485,16 @@ function playTierSound(config){
     audio.play().catch(() => {});
   } else {
     playBeep(config.beepFrequency || 440, 350, config.soundVolume ?? 0.5);
+  }
+}
+
+/* Joue le son du palier "config.soundRepeat" fois (1 par défaut),
+   chaque répétition espacée de 6000ms. */
+function playTierSound(config){
+  if(isMuted) return;
+  const repeats = config.soundRepeat || 1;
+  for(let i=0; i<repeats; i++){
+    setTimeout(() => playOneSound(config), i * 6000);
   }
 }
 
@@ -565,6 +597,8 @@ function ensureLoop(){
   }
 }
 
+/* Salve unique de confettis : ne se répète plus dans le temps,
+   donc l'écran ne se charge plus en confettis en continu. */
 function confetti(bursts, colors){
   const w = window.innerWidth;
   for(let i=0;i<bursts;i++){
@@ -608,13 +642,22 @@ function shakeScreen(){
 }
 
 /* =========================================================
-   Gros chiffre (version simple, sans effet 3D)
+   Gros chiffre (montant + label optionnel, ex : "RECORD BATTU!")
    ========================================================= */
 const bigNumberEl = document.getElementById("big-number");
 let bigNumberTimer = null;
-function showBigNumber(value, duration=1800){
+function showBigNumber(value, duration=1800, label=null){
   clearTimeout(bigNumberTimer);
-  bigNumberEl.querySelector(".circle").textContent = formatEuro(value);
+  const amountEl = bigNumberEl.querySelector(".circle-amount");
+  const labelEl = bigNumberEl.querySelector(".circle-label");
+  amountEl.textContent = formatEuro(value);
+  if(label){
+    labelEl.textContent = label;
+    labelEl.style.display = "block";
+  } else {
+    labelEl.textContent = "";
+    labelEl.style.display = "none";
+  }
   // on retire puis on force un reflow avant de rajouter "show" : ça garantit
   // que l'animation d'entrée (et le fond animé) redémarre proprement même
   // si un palier est déclenché juste après un autre.
@@ -632,28 +675,36 @@ function playTierAnimation(tier, value){
   if(!config) return;
 
   applyTierClass(tier);
-  if(config.bigNumber) showBigNumber(value, config.bigNumberDurationMs || config.durationMs);
+  if(config.bigNumber){
+    showBigNumber(
+      value,
+      config.bigNumberDurationMs || config.durationMs,
+      tier === "record" ? "RECORD BATTU!" : null
+    );
+  }
   if(config.flashColor) flashScreen(config.flashColor, config.flashDurationMs || 600);
   if(config.shake) shakeScreen();
   playTierSound(config);
 
-  // Salve initiale + relances régulières pendant toute la durée de l'effet,
-  // pour que l'écran reste animé (confettis/feux) tant que l'overlay est là.
+  // Confettis : une seule salve au déclenchement (ne s'accumulent plus).
+  if(config.confettiBursts) confetti(config.confettiBursts, config.colors);
+
+  // Feux d'artifice : continuent à se déclencher régulièrement pendant
+  // toute la durée de l'effet.
   const totalDuration = config.durationMs || 1500;
   const repeatEvery = 450;
   const startTime = performance.now();
 
-  function burstWave(){
-    if(config.confettiBursts) confetti(Math.max(2, Math.round(config.confettiBursts/4)), config.colors);
+  function fireworksWave(){
     if(config.fireworksBursts) fireworks(Math.max(1, Math.round(config.fireworksBursts/3)), config.colors);
   }
-  burstWave();
+  fireworksWave();
   const waveTimer = setInterval(()=>{
     if(performance.now() - startTime >= totalDuration){
       clearInterval(waveTimer);
       return;
     }
-    burstWave();
+    fireworksWave();
   }, repeatEvery);
 }
 
