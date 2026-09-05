@@ -865,34 +865,6 @@ function extractValue(json){
 }
 
 /* =========================================================
-   Polling HTTP (solution de repli si le WebSocket est indisponible)
-   ========================================================= */
-let pollTimer = null;
-
-async function pollOnce(){
-  if(!CONFIG.API_URL) return;
-  try{
-    const res = await fetch(CONFIG.API_URL);
-    const json = await res.json();
-    const value = extractValue(json);
-    if(value != null){
-      handleNewValue(value);
-      setStatus("HTTP — dernière valeur reçue : " + formatEuro(value));
-    }
-  }catch(err){
-    console.error("Erreur API :", err);
-    setStatus("Erreur HTTP (" + err.message + ")");
-  }
-}
-
-function startPolling(){
-  setStatus("Connexion en HTTP (repli)…");
-  if(pollTimer) clearInterval(pollTimer);
-  pollOnce();
-  pollTimer = setInterval(pollOnce, CONFIG.POLL_INTERVAL_MS);
-}
-
-/* =========================================================
    WebSocket temps réel (prioritaire sur le polling HTTP)
    ========================================================= */
 let ws = null;
