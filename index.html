@@ -276,7 +276,6 @@
     <a class="donate-btn" href="https://streamlabscharity.com/teams/@zevent-2026/zevent-2026" target="_blank" rel="noopener">Faire un don</a>
   </main>
 
-  <div id="conn-status">initialisation…</div>
 
   <button id="fullscreen-toggle" class="icon-btn" title="Plein écran">
     <svg id="icon-fs-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -398,9 +397,7 @@ const CONFIG = {
    Statut de connexion (debug discret en bas à gauche)
    ========================================================= */
 const statusEl = document.getElementById("conn-status");
-function setStatus(text){
-  if(statusEl) statusEl.textContent = text;
-}
+function setStatus(text){ }
 
 /* =========================================================
    Paliers
