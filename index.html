@@ -933,6 +933,10 @@ function connectWebSocket(){
 
   return true;
 }
+  console.log(
+  "[ZEVENT] Les données affichées proviennent de https://zevent.marentdev.eu/flux.",
+  "font-size:16px; font-weight:bold; color:#09ad09;"
+);
 
 // on tente le WebSocket en priorité ; le HTTP tourne en parallèle tant que
 // le WS n'a jamais confirmé une connexion, pour ne jamais laisser la page vide
