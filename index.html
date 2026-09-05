@@ -252,6 +252,26 @@
   #fullscreen-toggle{ right:1.25rem; }
   #mute-toggle{ right:5.25rem; }
 
+  /* ==========================================================
+     STATUT DE CONNEXION (debug discret)
+     ========================================================== */
+  #conn-status{
+    position:fixed;
+    bottom:1.25rem;
+    left:1.25rem;
+    z-index:10;
+    font-size:.72rem;
+    color:rgba(9,173,9,.6);
+    font-family:'Inter',sans-serif;
+    background:rgba(0,0,0,.25);
+    padding:.35rem .6rem;
+    border-radius:6px;
+    max-width:60vw;
+    pointer-events:none;
+    transition:opacity .4s ease;
+  }
+  body.controls-hidden #conn-status{ opacity:0; }
+
   @media (prefers-reduced-motion: reduce){
     #counter, body.shake, #big-number .circle{transition:none !important; animation:none !important;}
   }
@@ -271,6 +291,8 @@
     <h1 id="counter">0,00€</h1>
     <a class="donate-btn" href="https://streamlabscharity.com/teams/@zevent-2026/zevent-2026" target="_blank" rel="noopener">Faire un don</a>
   </main>
+
+  <div id="conn-status">initialisation…</div>
 
   <button id="fullscreen-toggle" class="icon-btn" title="Plein écran">
     <svg id="icon-fs-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -306,35 +328,13 @@
    ========================================================= */
 const CONFIG = {
   API_URL: "https://zeventapi.meafk80.workers.dev/",
+  WS_URL: "wss://zevent.marentdev.eu/api/flux/socket",   // priorité sur API_URL si la connexion réussit
   VALUE_PATH: ["donationAmount", "number"],
   POLL_INTERVAL_MS: 5000,
   RECORD_VALUE: 16179096.01,
 
   DEFAULT_MUTED: false,
 
-  /* =======================================================
-     RÉGLAGES PAR PALIER
-       durationMs          -> durée totale de l'effet (ms) et
-                               temps d'attente avant l'effet suivant
-       confettiBursts      -> nombre de particules de la salve unique de confettis
-                               (0 = off). Les confettis ne se répètent plus :
-                               une seule salve est jouée par déclenchement.
-       fireworksBursts     -> nombre de bouquets de feu d'artifice (0 = off),
-                               répétés régulièrement pendant toute la durée
-       colors              -> couleurs des particules
-       flashColor          -> couleur du flash plein écran (rgba)
-       flashDurationMs     -> durée du fondu du flash
-       shake               -> true/false
-       bigNumber           -> true/false, affiche le montant en grand
-       bigNumberDurationMs -> durée d'affichage
-       sound               -> mets ici l'URL de TON fichier son, ex :
-                               "https://tonsite.com/sons/tier2.mp3"
-                               (laisse null pour un bip généré automatiquement)
-       soundVolume         -> 0 à 1
-       soundRepeat         -> nombre de fois où le son est joué, espacé de
-                               6000ms (par défaut 1 si absent)
-       beepFrequency       -> fréquence du bip auto (Hz), ignoré si "sound" est défini
-     ======================================================= */
   TIERS: {
     tier1: {
       durationMs: 6000,
@@ -409,6 +409,14 @@ const CONFIG = {
     },
   },
 };
+
+/* =========================================================
+   Statut de connexion (debug discret en bas à gauche)
+   ========================================================= */
+const statusEl = document.getElementById("conn-status");
+function setStatus(text){
+  if(statusEl) statusEl.textContent = text;
+}
 
 /* =========================================================
    Paliers
@@ -728,7 +736,7 @@ function showBigNumber(value, duration=1800, label=null){
     labelEl.textContent = "";
     labelEl.style.display = "none";
   }
-  
+
   bigNumberEl.classList.remove("show");
   void bigNumberEl.offsetWidth;
   bigNumberEl.classList.add("show");
@@ -794,10 +802,8 @@ function processQueue(){
 /* =========================================================
    Logique métier
    ========================================================= */
-function handleNewValue(newValue, {silent=false} = {}){
-  const oldValue = state.lastValue == null ? newValue : state.lastValue;
-
-  if(state.lastValue == null){
+function handleNewValue(newValue, {silent=false, forceAnimate=false} = {}){
+  if(state.lastValue == null && !forceAnimate){
     let lastTier = null;
     MILESTONES.forEach(m=>{
       if(m.value <= newValue){
@@ -806,7 +812,15 @@ function handleNewValue(newValue, {silent=false} = {}){
       }
     });
     if(lastTier) applyTierClass(lastTier);
-  } else if(newValue > oldValue && !silent){
+    state.lastValue = newValue;
+    saveState();
+    animateCounterTo(newValue);
+    return;
+  }
+
+  const oldValue = state.lastValue == null ? 0 : state.lastValue;
+
+  if(newValue > oldValue && !silent){
     MILESTONES.forEach(m=>{
       if(m.value > oldValue && m.value <= newValue && !state.played.has(m.value)){
         state.played.add(m.value);
@@ -821,7 +835,8 @@ function handleNewValue(newValue, {silent=false} = {}){
 }
 
 /* =========================================================
-   Récupération des données (API)
+   Récupération des données : reconnaît automatiquement
+   la forme du JSON, que ce soit via HTTP ou via WebSocket
    ========================================================= */
 function extractValue(json){
   if(json && typeof json === "object"){
@@ -849,6 +864,9 @@ function extractValue(json){
   return typeof v === "number" ? v : null;
 }
 
+/* =========================================================
+   Polling HTTP (solution de repli si le WebSocket est indisponible)
+   ========================================================= */
 let pollTimer = null;
 
 async function pollOnce(){
@@ -857,18 +875,88 @@ async function pollOnce(){
     const res = await fetch(CONFIG.API_URL);
     const json = await res.json();
     const value = extractValue(json);
-    if(value != null) handleNewValue(value);
+    if(value != null){
+      handleNewValue(value);
+      setStatus("HTTP — dernière valeur reçue : " + formatEuro(value));
+    }
   }catch(err){
     console.error("Erreur API :", err);
+    setStatus("Erreur HTTP (" + err.message + ")");
   }
 }
 
 function startPolling(){
+  setStatus("Connexion en HTTP (repli)…");
   if(pollTimer) clearInterval(pollTimer);
   pollOnce();
   pollTimer = setInterval(pollOnce, CONFIG.POLL_INTERVAL_MS);
 }
+
+/* =========================================================
+   WebSocket temps réel (prioritaire sur le polling HTTP)
+   ========================================================= */
+let ws = null;
+let wsMessageCount = 0;
+let wsConnectedOnce = false;
+
+function connectWebSocket(){
+  if(!CONFIG.WS_URL) return false;
+
+  try{
+    ws = new WebSocket(CONFIG.WS_URL);
+  }catch(e){
+    setStatus("WebSocket indisponible (" + e.message + "). Passage en HTTP.");
+    return false;
+  }
+
+  ws.onopen = () => {
+    wsConnectedOnce = true;
+    // dès que le WS est bien ouvert, on n'a plus besoin du polling HTTP
+    if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+    setStatus("WebSocket connecté — en attente de données…");
+  };
+
+  ws.onmessage = (event) => {
+    wsMessageCount++;
+    let payload;
+    try{
+      payload = JSON.parse(event.data);
+    }catch(e){
+      setStatus("Message WS reçu (non-JSON) : " + String(event.data).slice(0,120));
+      return;
+    }
+    const value = extractValue(payload);
+    if(value != null){
+      handleNewValue(value);
+      setStatus("WebSocket — dernière valeur : " + formatEuro(value));
+    } else if(wsMessageCount <= 3){
+      // affiche les premiers messages bruts pour identifier le bon champ si besoin
+      setStatus("Message WS #" + wsMessageCount + " (champ inconnu) : " + JSON.stringify(payload).slice(0,200));
+    }
+  };
+
+  ws.onerror = () => {
+    setStatus("Erreur WebSocket…");
+  };
+
+  ws.onclose = () => {
+    if(wsConnectedOnce){
+      setStatus("WebSocket fermé — reconnexion dans 3s (HTTP en secours)…");
+    } else {
+      setStatus("WebSocket inaccessible — passage en HTTP.");
+    }
+    // pendant la reconnexion, on continue quand même à recevoir des données via HTTP
+    if(!pollTimer) startPolling();
+    setTimeout(connectWebSocket, 3000);
+  };
+
+  return true;
+}
+
+// on tente le WebSocket en priorité ; le HTTP tourne en parallèle tant que
+// le WS n'a jamais confirmé une connexion, pour ne jamais laisser la page vide
 startPolling();
+connectWebSocket();
 </script>
 </body>
 </html>
