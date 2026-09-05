@@ -256,22 +256,6 @@
   /* ==========================================================
      STATUT DE CONNEXION (debug discret)
      ========================================================== */
-  #conn-status{
-    position:fixed;
-    bottom:1.25rem;
-    left:1.25rem;
-    z-index:10;
-    font-size:.72rem;
-    color:rgba(9,173,9,.6);
-    font-family:'Inter',sans-serif;
-    background:rgba(0,0,0,.25);
-    padding:.35rem .6rem;
-    border-radius:6px;
-    max-width:60vw;
-    pointer-events:none;
-    transition:opacity .4s ease;
-  }
-  body.controls-hidden #conn-status{ opacity:0; }
 
   @media (prefers-reduced-motion: reduce){
     #counter, body.shake, #big-number .circle{transition:none !important; animation:none !important;}
@@ -526,9 +510,7 @@ buildAssosBanner();
    Statut de connexion (debug discret en bas à gauche)
    ========================================================= */
 const statusEl = document.getElementById("conn-status");
-function setStatus(text){
-  if(statusEl) statusEl.textContent = text;
-}
+function setStatus(text){ }
 
 /* =========================================================
    Paliers
